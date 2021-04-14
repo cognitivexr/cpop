@@ -1,6 +1,5 @@
 import logging
 import random
-import time
 from math import tan, pi
 
 import cv2
@@ -53,7 +52,11 @@ def draw(frame, imgpts):
     return frame
 
 
-class ObjectDetector:
+class ObjectDetectorV1:
+    """
+    First prototype of our CPOP pose estimation used for the demo at DISCE'21. It uses YOLOv5 for detecting objects,
+    a custom camera calibration method, and the assumption that objects are on the ground plane for depth estimation.
+    """
 
     def __init__(self, hfov=70.42, vfov=43.3, pixel_size=None, focal_mm=3.67):
         r""" Initializes CameraCalibration module with sensor information
@@ -274,8 +277,7 @@ class ObjectDetector:
         self.rot_cam_chessboard = cv2.Rodrigues(rvec)[0]
         self.rot_chessboard_cam = np.transpose(self.rot_cam_chessboard)
         self.t_cam_chessboard = tvec
-        self.pos_cam_chessboard = np.matmul(
-            -self.rot_chessboard_cam, self.t_cam_chessboard)
+        self.pos_cam_chessboard = np.matmul(-self.rot_chessboard_cam, self.t_cam_chessboard)
 
         return blob_frame
 
@@ -435,34 +437,3 @@ class ObjectDetector:
         # positions = np.array(positions)
         # heights = np.array(heights)
         return frame, labels, positions, heights, widths
-
-
-def run_capture_loop(capture, detector: ObjectDetector, result_queue):
-    logger.info('running capture loop...')
-
-    while True:
-        then = time.time()
-        ret, frame = capture.read()
-        timestamp = time.time()  # frame timestamp
-
-        _, labels, positions, heights, widths = detector.estimate_pose(frame, viz=False)
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('object_detection took %.4f s', time.time() - then)
-
-        for i in range(len(labels)):
-            position = positions[i]
-            label = labels[i]
-            height = float(heights[i])
-            width = float(widths[i])
-
-            message = {
-                'Timestamp': timestamp,
-                'Type': label,
-                'Position': {'X': float(position[0]), 'Y': float(position[1]), 'Z': float(position[2])},
-                'Shape': [{'X': width, 'Y': 0.0, 'Z': height}]
-            }
-
-            logger.debug('queueing message %s', message)
-
-            result_queue.put(message)
