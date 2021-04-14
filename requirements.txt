@@ -1,6 +1,6 @@
 Cython
 
-opencv-python==4.1.1
+opencv-python>=4.1.1
 
 numpy==1.19.4
 pandas==1.1.5
@@ -15,3 +15,5 @@ tqdm>=4.41.0
 seaborn
 scikit-learn
 scikit-image
+
+paho-mqtt>=1.5.1
