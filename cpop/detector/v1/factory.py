@@ -6,7 +6,7 @@ import cv2
 
 from cpop import config
 from cpop.capture import capture_from_vid
-from cpop.core import ObjectDetector, DetectionStream, Detection, Point
+from cpop.core import ObjectDetector, DetectionStream, Detection, Point, CalibrationError
 from .detector import ObjectDetectorV1
 
 logger = logging.getLogger(__name__)
@@ -52,17 +52,23 @@ def create_object_detector() -> ObjectDetector:
 
     :return: an ObjectDetector
     """
-    object_detector = ObjectDetectorV1()
-
     logger.info('initializing camera parameters')
     if config.CALIBRATE_FRAME and os.path.isfile(config.CALIBRATE_FRAME):
         logger.info('using existing frame for calibration %s', config.CALIBRATE_FRAME)
         frame = cv2.imread(config.CALIBRATE_FRAME)
     else:
         logger.info('capturing frame from source')
-        frame = capture_from_vid(source=0, width=1920, height=1080)
+        frame = capture_from_vid(source=config.CAMERA_DEVICE, width=1920, height=1080)
 
-    object_detector.init_camera_parameters(frame, viz=False)
+    if frame is None:
+        raise CalibrationError('no frame captured to initialize camera parameters')
+
+    object_detector = ObjectDetectorV1()
+
+    try:
+        object_detector.init_camera_parameters(frame, viz=False)
+    except IndexError as e:
+        raise CalibrationError('error in init_camera_parameters. missing/bad calibration marker?') from e
 
     logger.info('camera parameters (rvec: %s, tvec: %s)', object_detector.rvec, object_detector.tvec)
 

@@ -15,6 +15,10 @@ class Detection(NamedTuple):
     Shape: List[Point]
 
 
+class CalibrationError(Exception):
+    pass
+
+
 class DetectionStream(abc.ABC):
     @abc.abstractmethod
     def notify(self, detection: Detection): ...
@@ -23,3 +27,8 @@ class DetectionStream(abc.ABC):
 class ObjectDetector(abc.ABC):
     @abc.abstractmethod
     def process(self, frame, stream: DetectionStream, *args, **kwargs): ...
+
+
+class DetectionSerializer(abc.ABC):
+    @abc.abstractmethod
+    def serialize(self, detection: Detection) -> bytes: ...
