@@ -44,14 +44,14 @@ def param_to_json(params: CameraParameters) -> str:
     return json.dumps(doc)
 
 
-def param_from_json(jsonstr: str) -> CameraParameters:
+def param_from_json(json_str: str) -> CameraParameters:
     def get_array(dictionary, key):
         arr = dictionary.get(key)
         if arr is None:
             return None
         return np.array(arr)
 
-    doc = json.loads(jsonstr)
+    doc = json.loads(json_str)
 
     return CameraParameters(
         width=doc['width'],
@@ -74,12 +74,13 @@ def load_parameters(fpath) -> CameraParameters:
         return param_from_json(fd.read())
 
 
-def save_camera(camera: Camera):
+def save_camera(camera: Camera) -> str:
     if not camera.model:
         raise ValueError('cannot store camera without model name')
 
     fpath = get_camera_file_path(camera.model, camera.parameters.width, camera.parameters.height)
     save_parameters(fpath, camera.parameters)
+    return fpath
 
 
 def get_camera(model: str, width: int, height: int) -> Camera:
