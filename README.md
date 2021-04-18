@@ -10,12 +10,21 @@ To create a virtual environment and install all dependencies, run
     make venv
     source .venv/bin/activate
 
-### Test the camera calibration
+### Calibrate the camera
 
-You can test the detection of the calibration markers using:
+You can perform the camera calibration with the following command. The default arguments are set in `cpop/config.py`.
 
     python -m cpop.cli.calibrate
 
+The calibration uses a 5x7 ChArUco board with 4x4 markers, a square length of 3.5 cm, and marker length of 2.6 cm.
+You can [download an A4 PDF here](https://cognitivexr.at/static/files/calib.io_charuco_297x210_5x7_35_DICT_4X4.pdf). 
+
+After calibrating the camera, you can run
+
+    python -m cpop.cli.validate
+
+and verify that the axis is plotted correctly onto the board.
+You can also add the flag `--single-marker 4` to detect 4x4 Aruco markers individually.
 
 ### Run the service
 
