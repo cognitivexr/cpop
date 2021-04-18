@@ -61,16 +61,25 @@ def param_from_json(jsonstr: str) -> CameraParameters:
     )
 
 
+def save_parameters(fpath: str, parameters: CameraParameters):
+    _mkdirp(os.path.dirname(fpath))
+
+    with open(fpath, 'w') as fd:
+        logger.debug('storing camera parameters into %s', fpath)
+        fd.write(param_to_json(parameters))
+
+
+def load_parameters(fpath) -> CameraParameters:
+    with open(fpath, 'r') as fd:
+        return param_from_json(fd.read())
+
+
 def save_camera(camera: Camera):
     if not camera.model:
         raise ValueError('cannot store camera without model name')
 
     fpath = get_camera_file_path(camera.model, camera.parameters.width, camera.parameters.height)
-    _mkdirp(os.path.dirname(fpath))
-
-    with open(fpath, 'w') as fd:
-        logger.debug('storing camera parameters into %s', fpath)
-        fd.write(param_to_json(camera.parameters))
+    save_parameters(fpath, camera.parameters)
 
 
 def get_camera(model: str, width: int, height: int) -> Camera:
@@ -80,6 +89,7 @@ def get_camera(model: str, width: int, height: int) -> Camera:
     if os.path.isfile(fpath):
         # stored parameter file exists, load it
         logger.debug('loading parameters from %s', fpath)
+        return Camera(model=model, parameters=load_parameters(fpath))
 
     if model not in known_models:
         raise ValueError('unknown camera model "%s". available: %s' % (model, ','.join(known_models.keys())))

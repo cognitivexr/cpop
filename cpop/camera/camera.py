@@ -17,6 +17,14 @@ class CameraParameters:
         self.camera_matrix = camera_matrix
         self.dist_coeffs = dist_coeffs
 
+    def __str__(self):
+        d = self.__dict__
+        for k, v in d.items():
+            if isinstance(v, np.ndarray):
+                d[k] = v.tolist()
+
+        return 'CameraParameters(%s)' % d
+
     @staticmethod
     def from_fov(width, height, hfov, vfov) -> 'CameraParameters':
         """
@@ -58,9 +66,14 @@ class Camera:
     def __init__(self, parameters, model: str = None):
         self.parameters = parameters
         self.model = model
+        self.device_index = 0
 
-    def get_capture_device(self, device_index=0):
+    def get_capture_device(self, device_index=None):
+        if device_index is None:
+            device_index = self.device_index or 0
+
         cap = cv2.VideoCapture(device_index)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.parameters.width)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.parameters.height)
+
         return cap
