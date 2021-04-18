@@ -6,7 +6,7 @@ from cpop.camera import Camera
 
 def run_aruco_detection(camera: Camera, aruco_dict=None):
     if aruco_dict is None:
-        aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_1000)
+        aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
 
     cap = camera.get_capture_device()
 

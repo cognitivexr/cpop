@@ -52,7 +52,7 @@ def main():
             exit(1)
             return
 
-        dict_key = f'DICT_{n}X{n}_1000'
+        dict_key = f'DICT_{n}X{n}_50'
 
         try:
             aruco_dict = aruco.Dictionary_get(getattr(aruco, dict_key))

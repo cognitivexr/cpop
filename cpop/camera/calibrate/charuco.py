@@ -6,7 +6,7 @@ from cpop.camera import CameraParameters, Camera
 
 
 def create_default_board():
-    aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_1000)
+    aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
 
     board = aruco.CharucoBoard_create(
         squaresX=7,
