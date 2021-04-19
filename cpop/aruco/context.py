@@ -35,6 +35,10 @@ class CameraParameters:
     camera_matrix: np.ndarray
     dist_coeffs: np.ndarray
 
+    def __init__(self, camera_matrix, dist_coeffs):
+        self.camera_matrix = camera_matrix
+        self.dist_coeffs = dist_coeffs
+
 
 class ArucoContext:
     marker_set: ArucoMarkerSet
