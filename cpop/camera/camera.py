@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 
-class CameraParameters:
+class IntrinsicCameraParameters:
     width: int  # number of pixels
     height: int  # number of pixels
     camera_matrix: np.ndarray
@@ -26,7 +26,7 @@ class CameraParameters:
         return 'CameraParameters(%s)' % d
 
     @staticmethod
-    def from_fov(width, height, hfov, vfov) -> 'CameraParameters':
+    def from_fov(width, height, hfov, vfov) -> 'IntrinsicCameraParameters':
         """
         Crates camera parameters for the given frame shape from the given horizontal and vertical field of view angles.
         """
@@ -40,10 +40,10 @@ class CameraParameters:
                                   [0, f_y, c_y],
                                   [0, 0, 1]])
 
-        return CameraParameters(width=width, height=height, camera_matrix=camera_matrix)
+        return IntrinsicCameraParameters(width=width, height=height, camera_matrix=camera_matrix)
 
     @staticmethod
-    def from_focal(width, height, focal_mm, pixel_size_mm) -> 'CameraParameters':
+    def from_focal(width, height, focal_mm, pixel_size_mm) -> 'IntrinsicCameraParameters':
         c_x = width / 2
         c_y = height / 2
 
@@ -56,15 +56,21 @@ class CameraParameters:
                                   [0, f_y, c_y],
                                   [0, 0, 1]])
 
-        return CameraParameters(width=width, height=height, camera_matrix=camera_matrix)
+        return IntrinsicCameraParameters(width=width, height=height, camera_matrix=camera_matrix)
+
+
+class ExtrinsicCameraParameters:
+    rvec: np.ndarray
+    tvec: np.ndarray
 
 
 class Camera:
     model: str
-    parameters: CameraParameters
+    intrinsic: IntrinsicCameraParameters
+    extrinsic: ExtrinsicCameraParameters
 
-    def __init__(self, parameters, model: str = None):
-        self.parameters = parameters
+    def __init__(self, intrinsic, model: str = None):
+        self.intrinsic = intrinsic
         self.model = model
         self.device_index = 0
 
@@ -73,7 +79,7 @@ class Camera:
             device_index = self.device_index or 0
 
         cap = cv2.VideoCapture(device_index)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.parameters.width)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.parameters.height)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.intrinsic.width)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.intrinsic.height)
 
         return cap

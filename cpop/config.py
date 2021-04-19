@@ -10,6 +10,7 @@ CALIBRATE_FRAME = 'data/calib-and-test/frame_1920x1080.jpg'
 CAMERA_WIDTH = 1024
 CAMERA_HEIGHT = 576
 CAMERA_DEVICE = 0
+CAMERA_MODEL = 'default'
 
 # MQTT topic name
 MQTT_TOPIC_NAME = 'cpop'

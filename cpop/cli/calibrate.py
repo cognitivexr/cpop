@@ -30,7 +30,7 @@ def main():
         max_samples=args.max_samples
     )
 
-    camera = Camera(model=args.camera_model, parameters=parameters)
+    camera = Camera(model=args.camera_model, intrinsic=parameters)
     path = cameradb.save_camera(camera)
     print('calibration done! parameters saved to', path)
 

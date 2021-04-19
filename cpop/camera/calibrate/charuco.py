@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from cv2 import aruco
 
-from cpop.camera import CameraParameters, Camera
+from cpop.camera import IntrinsicCameraParameters, Camera
 
 
 def create_default_board():
@@ -142,7 +142,7 @@ def collect_charuco_detections(capture, aruco_dict, charuco_board):
     return corners_all, ids_all, image_size
 
 
-def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -> CameraParameters:
+def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -> IntrinsicCameraParameters:
     aruco_dict, charuco_board = create_default_board()
 
     cap = cv2.VideoCapture(source)
@@ -170,12 +170,12 @@ def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -
     print('running calibration with %d frames of size %s ...' % (len(corners), str(image_size)))
     _, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera_charuco(corners, ids, charuco_board, image_size)
 
-    return CameraParameters(image_size[0], image_size[1], camera_matrix, dist_coeffs)
+    return IntrinsicCameraParameters(image_size[0], image_size[1], camera_matrix, dist_coeffs)
 
 
 def run_charuco_detection(camera: Camera):
     aruco_dict, charuco_board = create_default_board()
-    camera_matrix, dist_coeff = camera.parameters.camera_matrix, camera.parameters.dist_coeffs
+    camera_matrix, dist_coeff = camera.intrinsic.camera_matrix, camera.intrinsic.dist_coeffs
 
     cap = camera.get_capture_device()
 

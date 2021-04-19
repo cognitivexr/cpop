@@ -10,7 +10,7 @@ def run_aruco_detection(camera: Camera, aruco_dict=None):
 
     cap = camera.get_capture_device()
 
-    params = camera.parameters
+    params = camera.intrinsic
     camera_matrix, dist_coeffs = params.camera_matrix, params.dist_coeffs
 
     def display(frame, rvecs, tvecs):

@@ -7,14 +7,14 @@ import os
 
 import numpy as np
 
-from cpop.camera.camera import CameraParameters, Camera
+from cpop.camera.camera import IntrinsicCameraParameters, Camera
 
 logger = logging.getLogger(__name__)
 
 store_dir = os.path.join(os.path.expanduser("~"), '.cpop/cameras/')
 
 known_models = {
-    'HD Pro Webcam C920 fov': lambda width, height: CameraParameters.from_fov(width, height, 70.42, 43.3),
+    'HD Pro Webcam C920 fov': lambda width, height: IntrinsicCameraParameters.from_fov(width, height, 70.42, 43.3),
 }
 
 
@@ -34,7 +34,7 @@ def _mkdirp(dir_path: str):
     return os.makedirs(dir_path, exist_ok=True)
 
 
-def param_to_json(params: CameraParameters) -> str:
+def param_to_json(params: IntrinsicCameraParameters) -> str:
     doc = params.__dict__
 
     for k, v in doc.items():
@@ -44,7 +44,7 @@ def param_to_json(params: CameraParameters) -> str:
     return json.dumps(doc)
 
 
-def param_from_json(json_str: str) -> CameraParameters:
+def param_from_json(json_str: str) -> IntrinsicCameraParameters:
     def get_array(dictionary, key):
         arr = dictionary.get(key)
         if arr is None:
@@ -53,7 +53,7 @@ def param_from_json(json_str: str) -> CameraParameters:
 
     doc = json.loads(json_str)
 
-    return CameraParameters(
+    return IntrinsicCameraParameters(
         width=doc['width'],
         height=doc['height'],
         camera_matrix=get_array(doc, 'camera_matrix'),
@@ -61,7 +61,7 @@ def param_from_json(json_str: str) -> CameraParameters:
     )
 
 
-def save_parameters(fpath: str, parameters: CameraParameters):
+def save_parameters(fpath: str, parameters: IntrinsicCameraParameters):
     _mkdirp(os.path.dirname(fpath))
 
     with open(fpath, 'w') as fd:
@@ -69,7 +69,7 @@ def save_parameters(fpath: str, parameters: CameraParameters):
         fd.write(param_to_json(parameters))
 
 
-def load_parameters(fpath) -> CameraParameters:
+def load_parameters(fpath) -> IntrinsicCameraParameters:
     with open(fpath, 'r') as fd:
         return param_from_json(fd.read())
 
@@ -78,8 +78,8 @@ def save_camera(camera: Camera) -> str:
     if not camera.model:
         raise ValueError('cannot store camera without model name')
 
-    fpath = get_camera_file_path(camera.model, camera.parameters.width, camera.parameters.height)
-    save_parameters(fpath, camera.parameters)
+    fpath = get_camera_file_path(camera.model, camera.intrinsic.width, camera.intrinsic.height)
+    save_parameters(fpath, camera.intrinsic)
     return fpath
 
 
@@ -90,7 +90,7 @@ def get_camera(model: str, width: int, height: int) -> Camera:
     if os.path.isfile(fpath):
         # stored parameter file exists, load it
         logger.debug('loading parameters from %s', fpath)
-        return Camera(model=model, parameters=load_parameters(fpath))
+        return Camera(model=model, intrinsic=load_parameters(fpath))
 
     if model not in known_models:
         raise ValueError('unknown camera model "%s". available: %s' % (model, ','.join(known_models.keys())))
@@ -108,4 +108,4 @@ def get_camera(model: str, width: int, height: int) -> Camera:
     else:
         raise TypeError('invalid entry in known_models. this is a build error')
 
-    return Camera(parameters=parameters, model=model)
+    return Camera(intrinsic=parameters, model=model)
