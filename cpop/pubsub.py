@@ -30,7 +30,8 @@ class CPOPPublisher(abc.ABC):
         subclasses = CPOPPublisher.__subclasses__()
         subclasses = {subclass.name(): subclass for subclass in subclasses}
         if not impl_type and len(subclasses) != 1:
-            raise Exception('Multiple CPOPPublisher implemtations found and type not specified')
+            raise Exception(
+                'Multiple CPOPPublisher implemtations found and type not specified')
         subclass = subclasses.get(impl_type) or list(subclasses.values())[0]
         return subclass()
 
@@ -45,12 +46,14 @@ class CPOPPublisherMQTT(CPOPPublisher):
     def __init__(self, client_id=None, topic=None):
         self.client_id = client_id or 'cpop-service-%s' % gethostname()
         self.client = mqtt.Client(client_id=self.client_id)
-        self.client.connect(config.BROKER_HOST, config.BROKER_PORT, keepalive=30)
+        self.client.connect(config.BROKER_HOST,
+                            config.BROKER_PORT, keepalive=30)
         self.topic = topic or config.MQTT_TOPIC_NAME
 
     def publish_event(self, event):
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug('publishing message to topic %s: %s', self.topic, event)
+            logger.debug('publishing message to topic %s: %s',
+                         self.topic, event)
 
         self.client.publish(self.topic, event)
 

@@ -2,7 +2,6 @@ from cpop.aruco.context import ArucoContext
 import cv2
 from cv2 import aruco
 from cpop.camera import Camera
-import numpy as np
 from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections
 
 
@@ -46,7 +45,7 @@ def run_aruco_detection(camera: Camera, aruco_context: ArucoContext):
 
                 # output camera position:
                 for marker in aruco_poses.markers:
-                    if marker.marker_id==12:
+                    if marker.marker_id==0:
                         print(f'camera position: {marker.get_camera_position()}')
 
                 display(img, aruco_poses)

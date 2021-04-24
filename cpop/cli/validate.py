@@ -19,7 +19,8 @@ def print_calibrate_instructions(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CPOP tool to visually validate a camera calibration')
+    parser = argparse.ArgumentParser(
+        description='CPOP tool to visually validate a camera calibration')
 
     parser.add_argument('--width', type=int, required=False, default=config.CAMERA_WIDTH,
                         help='camera capture mode: width')
@@ -31,18 +32,21 @@ def main():
                         help='camera model name (for storage)')
     parser.add_argument('--single-marker', type=int, required=False, default=None,
                         help='use a single marker instead of a ChArUco board by specifying the marker size (4,5,6,7)')
-
+    parser.add_argument('--marker-size', type=float, required=False, default=config.SIZE,
+                        help='size of the aruco marker in meters')
+    parser.add_argument('--aruco-dict', type=str,
+                        required=False, default=config.ARUCO_DICT)
     args = parser.parse_args()
 
     try:
-        camera = cameradb.get_camera(args.camera_model, args.width, args.height)
-        camera.device_index=args.device_id
+        camera = cameradb.get_camera(
+            args.camera_model, args.width, args.height)
+        camera.device_index = args.device_id
     except ValueError as e:
         print('could not load camera for parameters: %s' % e)
         print_calibrate_instructions(args)
         exit(1)
 
-    # TODO: if exit/return called, does finally happen?
     try:
         if args.single_marker is None:
             run_charuco_detection(camera)
@@ -53,21 +57,9 @@ def main():
             print('marker size out of range, has to be one of: 4,5,6,7')
             exit(1)
 
-        # dict_key = f'DICT_{n}X{n}_50'
-        # TODO remove:
-        # dict_key = aruco.DICT_6X6_250
-        aruco_context = ArucoContext(ArucoMarkerSet.SET_6X6_250, 4.7/100)
-
-        #try:
-        #    # TODO remove
-        #    # aruco_dict = aruco.Dictionary_get(getattr(aruco, dict_key))
-        #    aruco_dict = aruco.Dictionary_get(dict_key)
-        #except AttributeError as e:
-        #    print('could not initialize aruco marker: %s' % e)
-        #    exit(1)
-
+        aruco_context = ArucoContext(
+            ArucoMarkerSet[args.aruco_dict], args.marker_size)
         run_aruco_detection(camera, aruco_context)
-
     except KeyboardInterrupt:
         pass
     finally:

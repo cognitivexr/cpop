@@ -6,9 +6,9 @@ from cpop.camera.calibrate import run_charuco_calibration
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CPOP camera calibration tool to determine intrinsic parameters')
+    parser = argparse.ArgumentParser(
+        description='CPOP camera calibration tool to determine intrinsic parameters')
 
-    # TODO: discuss if size shouldn't be default opencv width:
     parser.add_argument('--width', type=int, required=False, default=config.CAMERA_WIDTH,
                         help='camera capture mode: width')
     parser.add_argument('--height', type=int, required=False, default=config.CAMERA_HEIGHT,
@@ -24,7 +24,6 @@ def main():
     args = parser.parse_args()
 
     print('press q to stop collection and start calibration')
-    # TODO add check if parameters were collected
     parameters = run_charuco_calibration(
         source=args.device_id,
         width=args.width,
