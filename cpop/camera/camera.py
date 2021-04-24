@@ -47,8 +47,9 @@ class IntrinsicCameraParameters:
         c_x = width / 2
         c_y = height / 2
 
-        sensor_width_mm = focal_mm * pixel_size_mm
-        sensor_height_mm = focal_mm * pixel_size_mm
+        # TODO verify
+        sensor_width_mm = width * pixel_size_mm
+        sensor_height_mm = height * pixel_size_mm
         f_x = (focal_mm / sensor_width_mm) * width
         f_y = (focal_mm / sensor_height_mm) * height
 
@@ -80,6 +81,6 @@ class Camera:
 
         cap = cv2.VideoCapture(device_index)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.intrinsic.width)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.intrinsic.height)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.intrinsic.height)
 
         return cap

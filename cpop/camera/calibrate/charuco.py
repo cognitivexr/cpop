@@ -54,6 +54,7 @@ def detect_charuco(frame, charuco_board, aruco_dict):
 def calibrate_camera_charuco(corners, ids, charuco_board, image_size):
     # Now that we've seen all of our images, perform the camera calibration
     # based on the set of points we've discovered
+    # TODO check if markers were found
     calibration, camera_matrix, dist_coeffs, rvecs, tvecs = aruco.calibrateCameraCharuco(
         charucoCorners=corners,
         charucoIds=ids,
@@ -77,6 +78,7 @@ def collect_charuco_detections(capture, aruco_dict, charuco_board):
     def show(frame):
         # resize
         proportion = max(frame.shape) / 800.0
+        # TODO, why resize?
         im = cv2.resize(frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
 
         # add text
@@ -173,11 +175,12 @@ def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -
     return IntrinsicCameraParameters(image_size[0], image_size[1], camera_matrix, dist_coeffs)
 
 
-def run_charuco_detection(camera: Camera):
+# TODO discuss device index:
+def run_charuco_detection(camera: Camera, device_index: any=None):
     aruco_dict, charuco_board = create_default_board()
     camera_matrix, dist_coeff = camera.intrinsic.camera_matrix, camera.intrinsic.dist_coeffs
 
-    cap = camera.get_capture_device()
+    cap = camera.get_capture_device(device_index)
 
     def display(frame):
         # resize

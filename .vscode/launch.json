@@ -1,0 +1,104 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Calibrate IP CAM",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.calibrate",
+            "args": [
+                "--width",
+                "640",
+                "--height",
+                "360",
+                "--device-id",
+                "http://192.168.0.164:8080/video",
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Validation IP CAM",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.validate",
+            "args": [
+                "--width",
+                "640",
+                "--height",
+                "360",
+                "--device-id",
+                "http://192.168.0.164:8080/video",
+                "--single-marker",
+                "4"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Validation 1280x720",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.validate",
+            "args": [
+                "--width",
+                "1280",
+                "--height",
+                "720",
+                "--device-id",
+                "~/Videos/1280x780-test.mp4",
+                "--single-marker",
+                "4"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Validation 1920x1080",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.validate",
+            "args": [
+                "--width",
+                "1920",
+                "--height",
+                "1080",
+                "--device-id",
+                "~/Videos/1920x1080-test.mp4",
+                "--single-marker",
+                "4"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Calibration 1280x720",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.calibrate",
+            "args": [
+                "--width",
+                "1280",
+                "--height",
+                "720",
+                "--device-id",
+                "~/Videos/1280x780-calibration.mp4",
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Calibration 1920x1080",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.calibrate",
+            "args": [
+                "--width",
+                "1920",
+                "--height",
+                "1080",
+                "--device-id",
+                "~/Videos/1920x1080-calibration.mp4",
+            ],
+            "justMyCode": false
+        },
+    ]
+}
