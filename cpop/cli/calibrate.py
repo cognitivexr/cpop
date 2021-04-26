@@ -15,7 +15,7 @@ def main():
                         help='camera capture mode: height')
     parser.add_argument('--device-id', required=False, default=config.CAMERA_DEVICE,
                         help='camera device id')
-    parser.add_argument('--camera-model', type=str, required=False, default='default',
+    parser.add_argument('--camera-model', type=str, required=False, default=config.CAMERA_MODEL,
                         help='camera model name (for storage)')
     parser.add_argument('--max-samples', type=int, required=False, default=50,
                         help='maximum number of frames to use for calibration. higher number will take exponentially '
