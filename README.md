@@ -21,10 +21,13 @@ You can [download an A4 PDF here](https://cognitivexr.at/static/files/calib.io_c
 
 After calibrating the camera, you can run
 
-    python -m cpop.cli.validate
+    python -m cpop.cli.validate --charuco
 
 and verify that the axis is plotted correctly onto the board.
-You can also add the flag `--single-marker 4` to detect 4x4 Aruco markers individually.
+You can also remove the flag `--charuco` to individual aruco markers, in which case you need to further specify the
+markers you want to detect.
+For example, with `aruco-marker-set SET_4x4_50 --aruco-marker-length 0.18` the script will detect 4x4 markers and
+calculate camera positions based on the marker length of 18 cm.
 
 ### Run the service
 

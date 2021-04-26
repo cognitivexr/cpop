@@ -4,18 +4,17 @@ from typing import Optional
 import cv2
 import numpy as np
 
+from cpop.aruco.context import CameraParameters
 
-class IntrinsicCameraParameters:
+
+class IntrinsicCameraParameters(CameraParameters):
     width: int  # number of pixels
     height: int  # number of pixels
-    camera_matrix: np.ndarray
-    dist_coeffs = Optional[np.ndarray]
 
     def __init__(self, width, height, camera_matrix: np.ndarray, dist_coeffs: Optional[np.ndarray] = None):
+        super().__init__(camera_matrix, dist_coeffs)
         self.width = width
         self.height = height
-        self.camera_matrix = camera_matrix
-        self.dist_coeffs = dist_coeffs
 
     def __str__(self):
         d = self.__dict__

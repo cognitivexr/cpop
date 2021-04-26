@@ -185,6 +185,7 @@ def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -
 
 
 def run_charuco_detection(camera: Camera, device_index: any = None):
+    # TODO: use charuco context
     aruco_dict, charuco_board = create_default_board()
     camera_matrix, dist_coeff = camera.intrinsic.camera_matrix, camera.intrinsic.dist_coeffs
 

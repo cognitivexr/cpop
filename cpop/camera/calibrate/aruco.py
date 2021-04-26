@@ -1,26 +1,25 @@
 import cv2
 
-from cpop.aruco.context import ArucoContext
+from cpop.aruco.context import ArucoContext, DefaultArucoContext
 from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections
 from cpop.camera import Camera
 
 
-def run_aruco_detection(camera: Camera, aruco_context: ArucoContext):
-    # if aruco_dict is None:
-    #     aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
+def run_aruco_detection(camera: Camera, aruco_context: ArucoContext = None):
+    if aruco_context is None:
+        aruco_context = DefaultArucoContext
 
     cap = camera.get_capture_device()
-    aruco_detector = ArucoDetector(aruco_context, camera)
+    aruco_detector = ArucoDetector(aruco_context, camera.intrinsic)
 
     def display(frame, aruco_poses: ArucoPoseDetections):
-        if aruco_poses is not None:
+        if aruco_poses is not None and not aruco_poses.is_empty():
             # draw_ar_cubes(frame, rvecs, tvecs, camera_matrix, dist_coeffs, aruco_context.marker_length)
             frame = aruco_detector.draw_ar_cubes(img, aruco_poses)
 
         # resize
         proportion = max(frame.shape) / 1000.0
-        im = cv2.resize(
-            frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
+        im = cv2.resize(frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
         # show the debug image
         cv2.imshow('aruco', im)
 

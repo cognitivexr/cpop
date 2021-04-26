@@ -146,8 +146,8 @@ class ArucoDetector:
         rvecs, tvecs, obj_points = aruco.estimatePoseSingleMarkers(
             corners=detections.corners,
             markerLength=self.context.marker_length,
-            cameraMatrix=self.camera.intrinsic.camera_matrix,
-            distCoeffs=self.camera.intrinsic.dist_coeffs,
+            cameraMatrix=self.camera.camera_matrix,
+            distCoeffs=self.camera.dist_coeffs,
             rvecs=None,
             tvecs=None
         )
@@ -192,8 +192,8 @@ class ArucoDetector:
         # , rvecs, tvecs, mtx, dist, marker_size
         rvecs, tvecs = aruco_poses.rvecs, aruco_poses.tvecs
         marker_size = self.context.marker_length
-        mtx = self.camera.intrinsic.camera_matrix
-        dist = self.camera.intrinsic.dist_coeffs
+        mtx = self.camera.camera_matrix
+        dist = self.camera.dist_coeffs
         # rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(res[0][i], 1, mtx, dist)
         # Define the ar cube
         # Since we previously set a matrix size of 1x1 for the marker and we want the cube to be the same size, it is

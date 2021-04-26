@@ -16,7 +16,7 @@ def main():
 
     detector = ArucoDetector(
         ArucoContext(ArucoMarkerSet.SET_4X4_50, marker_length=0.18),
-        CameraParameters(cam.intrinsic.camera_matrix, cam.intrinsic.dist_coeffs)
+        cam.intrinsic,
     )
 
     cap = cam.get_capture_device()
