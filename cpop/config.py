@@ -16,7 +16,7 @@ CAMERA_MODEL = 'default'
 MQTT_TOPIC_NAME = 'cpop'
 
 # aruco patterns
-SIZE = 4.7/100
+SIZE = 4.7 / 100
 ARUCO_DICT = 'SET_6X6_250'
 
 # configure logging

@@ -1,8 +1,8 @@
-from cpop.aruco.context import ArucoContext
 import cv2
-from cv2 import aruco
-from cpop.camera import Camera
+
+from cpop.aruco.context import ArucoContext
 from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections
+from cpop.camera import Camera
 
 
 def run_aruco_detection(camera: Camera, aruco_context: ArucoContext):
@@ -24,7 +24,6 @@ def run_aruco_detection(camera: Camera, aruco_context: ArucoContext):
         # show the debug image
         cv2.imshow('aruco', im)
 
-
     try:
         # Create the arrays and variables we'll use to store info like corners and IDs from images processed
         while True:
@@ -45,7 +44,7 @@ def run_aruco_detection(camera: Camera, aruco_context: ArucoContext):
 
                 # output camera position:
                 for marker in aruco_poses.markers:
-                    if marker.marker_id==0:
+                    if marker.marker_id == 0:
                         print(f'camera position: {marker.get_camera_position()}')
 
                 display(img, aruco_poses)

@@ -186,19 +186,34 @@ class ArucoDetector:
         return frame
 
     def draw_ar_cubes(self, img_rgb, aruco_poses: ArucoPoseDetections) -> np.array:
+        if self.camera is None:
+            raise MissingParametersError()
+
         # , rvecs, tvecs, mtx, dist, marker_size
         rvecs, tvecs = aruco_poses.rvecs, aruco_poses.tvecs
         marker_size = self.context.marker_length
         mtx = self.camera.intrinsic.camera_matrix
         dist = self.camera.intrinsic.dist_coeffs
-        #rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(res[0][i], 1, mtx, dist)
+        # rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(res[0][i], 1, mtx, dist)
         # Define the ar cube
-        # Since we previously set a matrix size of 1x1 for the marker and we want the cube to be the same size, it is also defined with a size of 1x1x1
-        # It is important to note that the center of the marker corresponds to the origin and we must therefore move 0.5 away from the origin
-        half_size = marker_size/2
-        axis = np.float32([[-half_size, -half_size, 0], [-half_size, half_size, 0], [half_size, half_size, 0], [half_size, -half_size, 0],
-                           [-half_size, -half_size, marker_size], [-half_size, half_size, marker_size], [half_size, half_size, marker_size], [half_size, -half_size, marker_size]])
+        # Since we previously set a matrix size of 1x1 for the marker and we want the cube to be the same size, it is
+        # also defined with a size of 1x1x1
+        # It is important to note that the center of the marker corresponds to the origin and we must therefore move 0.5
+        # away from the origin
+        half_size = marker_size / 2
+        axis = np.float32([
+            [-half_size, -half_size, 0],
+            [-half_size, half_size, 0],
+            [half_size, half_size, 0],
+            [half_size, -half_size, 0],
+            [-half_size, -half_size, marker_size],
+            [-half_size, half_size, marker_size],
+            [half_size, half_size, marker_size],
+            [half_size, -half_size, marker_size]
+        ])
+
         # Now we transform the cube to the marker position and project the resulting points into 2d
+        color = (255, 0, 0)
         for i in range(len(rvecs)):
             imgpts, jac = cv2.projectPoints(axis, rvecs[i], tvecs[i], mtx, dist)
             imgpts = np.int32(imgpts).reshape(-1, 2)
@@ -212,25 +227,17 @@ class ArucoDetector:
             side5 = img_rgb.copy()
             side6 = img_rgb.copy()
             # Draw the bottom side (over the marker)
-            side1 = cv2.drawContours(side1, [imgpts[:4]], -1, (255, 0, 0), -2)
+            side1 = cv2.drawContours(side1, [imgpts[:4]], -1, color, -2)
             # Draw the top side (opposite of the marker)
-            side2 = cv2.drawContours(side2, [imgpts[4:]], -1, (255, 0, 0), -2)
+            side2 = cv2.drawContours(side2, [imgpts[4:]], -1, color, -2)
             # Draw the right side vertical to the marker
-            side3 = cv2.drawContours(side3, [np.array(
-                [imgpts[0], imgpts[1], imgpts[5],
-                 imgpts[4]])], -1, (255, 0, 0), -2)
+            side3 = cv2.drawContours(side3, [np.array([imgpts[0], imgpts[1], imgpts[5], imgpts[4]])], -1, color, -2)
             # Draw the left side vertical to the marker
-            side4 = cv2.drawContours(side4, [np.array(
-                [imgpts[2], imgpts[3], imgpts[7],
-                 imgpts[6]])], -1, (255, 0, 0), -2)
+            side4 = cv2.drawContours(side4, [np.array([imgpts[2], imgpts[3], imgpts[7], imgpts[6]])], -1, color, -2)
             # Draw the front side vertical to the marker
-            side5 = cv2.drawContours(side5, [np.array(
-                [imgpts[1], imgpts[2], imgpts[6],
-                 imgpts[5]])], -1, (255, 0, 0), -2)
+            side5 = cv2.drawContours(side5, [np.array([imgpts[1], imgpts[2], imgpts[6], imgpts[5]])], -1, color, -2)
             # Draw the back side vertical to the marker
-            side6 = cv2.drawContours(side6, [np.array(
-                [imgpts[0], imgpts[3], imgpts[7],
-                 imgpts[4]])], -1, (255, 0, 0), -2)
+            side6 = cv2.drawContours(side6, [np.array([imgpts[0], imgpts[3], imgpts[7], imgpts[4]])], -1, color, -2)
             # Until here the walls of the cube are drawn in and can be merged
             img_rgb = cv2.addWeighted(side1, 0.1, img_rgb, 0.9, 0)
             img_rgb = cv2.addWeighted(side2, 0.1, img_rgb, 0.9, 0)
@@ -239,11 +246,11 @@ class ArucoDetector:
             img_rgb = cv2.addWeighted(side5, 0.1, img_rgb, 0.9, 0)
             img_rgb = cv2.addWeighted(side6, 0.1, img_rgb, 0.9, 0)
             # Now the edges of the cube are drawn thicker and stronger
-            img_rgb = cv2.drawContours(img_rgb, [imgpts[:4]], -1, (255, 0, 0), 2)
-            for i, j in zip(range(4), range(4, 8)):
-                img_rgb = cv2.line(img_rgb, tuple(
-                    imgpts[i]), tuple(imgpts[j]), (255, 0, 0), 2)
+            img_rgb = cv2.drawContours(img_rgb, [imgpts[:4]], -1, color, 2)
+            for ii, j in zip(range(4), range(4, 8)):
+                img_rgb = cv2.line(img_rgb, tuple(imgpts[ii]), tuple(imgpts[j]), color, 2)
             img_rgb = cv2.drawContours(img_rgb, [imgpts[4:]], -1, (255, 0, 0), 2)
+
         return img_rgb
 
     def draw_axis(self, frame, marker: Marker):

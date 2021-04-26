@@ -77,8 +77,7 @@ def collect_charuco_detections(capture, aruco_dict, charuco_board):
     def show(frame):
         # resize
         proportion = max(frame.shape) / 800.0
-        im = cv2.resize(
-            frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
+        im = cv2.resize(frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
 
         # add text
         txt = f'good frames so far: {good}'

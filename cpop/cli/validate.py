@@ -1,10 +1,9 @@
 import argparse
-from cpop.aruco.context import ArucoContext, ArucoMarkerSet
 
 import cv2
-from cv2 import aruco
 
 from cpop import config
+from cpop.aruco.context import ArucoContext, ArucoMarkerSet
 from cpop.camera import cameradb
 from cpop.camera.calibrate import run_charuco_detection, run_aruco_detection
 
@@ -39,8 +38,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        camera = cameradb.get_camera(
-            args.camera_model, args.width, args.height)
+        camera = cameradb.get_camera(args.camera_model, args.width, args.height)
         camera.device_index = args.device_id
     except ValueError as e:
         print('could not load camera for parameters: %s' % e)
@@ -57,8 +55,7 @@ def main():
             print('marker size out of range, has to be one of: 4,5,6,7')
             exit(1)
 
-        aruco_context = ArucoContext(
-            ArucoMarkerSet[args.aruco_dict], args.marker_size)
+        aruco_context = ArucoContext(ArucoMarkerSet[args.aruco_dict], args.marker_size)
         run_aruco_detection(camera, aruco_context)
     except KeyboardInterrupt:
         pass
