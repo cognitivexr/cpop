@@ -81,7 +81,8 @@ def collect_charuco_detections(capture, aruco_dict, charuco_board):
 
         # add text
         txt = f'good frames so far: {good}'
-        im = cv2.putText(im, txt, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        im = cv2.putText(im, txt, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                         1, (255, 0, 0), 2, cv2.LINE_AA)
 
         # show the debug image
         cv2.imshow('calibration', im)
@@ -95,7 +96,8 @@ def collect_charuco_detections(capture, aruco_dict, charuco_board):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find aruco markers in the query image
-        corners, ids, _ = aruco.detectMarkers(image=gray, dictionary=aruco_dict)
+        corners, ids, _ = aruco.detectMarkers(
+            image=gray, dictionary=aruco_dict)
 
         # Outline the aruco markers found in our query image
         img = aruco.drawDetectedMarkers(image=img, corners=corners)
@@ -154,35 +156,46 @@ def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -
     more, frame = cap.read()
     if not more:
         cap.release()
-        raise ValueError('could not get frames from capture device %s' % source)
+        raise ValueError(
+            'could not get frames from capture device %s' % source)
 
     try:
         print('collecting detections...')
-        corners_all, ids_all, image_size = collect_charuco_detections(cap, aruco_dict, charuco_board)
+        corners_all, ids_all, image_size = collect_charuco_detections(
+            cap, aruco_dict, charuco_board)
     finally:
         cv2.destroyWindow('calibration')
         cap.release()
+
+    if len(corners_all) == 0:
+        # happens if no corners are detected
+        # TODO: find better exception
+        raise Exception('no corners detected')
 
     n = max_samples
     # print('sampling %d detections...' % n)
     corners, ids = sample_random(corners_all, ids_all, n)
 
-    print('running calibration with %d frames of size %s ...' % (len(corners), str(image_size)))
-    _, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera_charuco(corners, ids, charuco_board, image_size)
+    print('running calibration with %d frames of size %s ...' %
+          (len(corners), str(image_size)))
+    _, camera_matrix, dist_coeffs, rvecs, tvecs = calibrate_camera_charuco(
+        corners, ids, charuco_board, image_size)
 
     return IntrinsicCameraParameters(image_size[0], image_size[1], camera_matrix, dist_coeffs)
 
 
-def run_charuco_detection(camera: Camera):
+def run_charuco_detection(camera: Camera, device_index: any = None):
+    # TODO: use charuco context
     aruco_dict, charuco_board = create_default_board()
     camera_matrix, dist_coeff = camera.intrinsic.camera_matrix, camera.intrinsic.dist_coeffs
 
-    cap = camera.get_capture_device()
+    cap = camera.get_capture_device(device_index)
 
     def display(frame):
         # resize
         proportion = max(frame.shape) / 1000.0
-        im = cv2.resize(frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
+        im = cv2.resize(
+            frame, (int(frame.shape[1] / proportion), int(frame.shape[0] / proportion)))
 
         # show the debug image
         cv2.imshow('calibration', im)
@@ -196,11 +209,7 @@ def run_charuco_detection(camera: Camera):
 
             corners, ids = detect_charuco(frame, charuco_board, aruco_dict)
 
-            if corners is None:
-                # print('no charuco board detected')
-                pass
-
-            else:
+            if not (corners is None):
                 ret, p_rvec, p_tvec = aruco.estimatePoseCharucoBoard(
                     charucoCorners=corners,
                     charucoIds=ids,
@@ -210,13 +219,11 @@ def run_charuco_detection(camera: Camera):
                     rvec=None,
                     tvec=None
                 )
-
                 try:
-                    frame = aruco.drawAxis(frame, camera_matrix, dist_coeff, p_rvec, p_tvec, 0.1)
+                    frame = aruco.drawAxis(
+                        frame, camera_matrix, dist_coeff, p_rvec, p_tvec, 0.1)
                 except cv2.error as e:
-                    # print('error drawing axis')
                     pass
-
             display(frame)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):

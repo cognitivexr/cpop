@@ -6,13 +6,14 @@ from cpop.camera.calibrate import run_charuco_calibration
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CPOP camera calibration tool to determine intrinsic parameters')
+    parser = argparse.ArgumentParser(
+        description='CPOP camera calibration tool to determine intrinsic parameters')
 
     parser.add_argument('--width', type=int, required=False, default=config.CAMERA_WIDTH,
                         help='camera capture mode: width')
     parser.add_argument('--height', type=int, required=False, default=config.CAMERA_HEIGHT,
                         help='camera capture mode: height')
-    parser.add_argument('--device-id', type=int, required=False, default=config.CAMERA_DEVICE,
+    parser.add_argument('--device-id', required=False, default=config.CAMERA_DEVICE,
                         help='camera device id')
     parser.add_argument('--camera-model', type=str, required=False, default='default',
                         help='camera model name (for storage)')
