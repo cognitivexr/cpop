@@ -34,8 +34,7 @@ def aruco_context_from_args(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='CPOP tool to visually validate a camera calibration')
+    parser = argparse.ArgumentParser(description='CPOP tool to visually validate a camera calibration')
 
     parser.add_argument('--width', type=int, required=False, default=config.CAMERA_WIDTH,
                         help='camera capture mode: width')

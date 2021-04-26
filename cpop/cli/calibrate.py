@@ -6,8 +6,7 @@ from cpop.camera.calibrate import run_charuco_calibration
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='CPOP camera calibration tool to determine intrinsic parameters')
+    parser = argparse.ArgumentParser(description='CPOP camera calibration tool to determine intrinsic parameters')
 
     parser.add_argument('--width', type=int, required=False, default=config.CAMERA_WIDTH,
                         help='camera capture mode: width')
