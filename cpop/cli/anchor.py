@@ -1,3 +1,13 @@
+"""
+CLI script to calibrate extrinsic camera parameters (anchor the camera to a common origin). Conceptually the anchoring
+procedure works as follows:
+
+* Wait until the detector finds an origin marker (a marker with id = 0 (configurable))
+* Once it is in marker detection mode, collect frames until the marker seems 'stable' (position has not changed much)
+* Once the marker is 'stable', prompt the user to save the parameters
+* Take the median of the last n marker detections (default = 30) to smooth out noise
+* Create and save an ExtrinsicCameraParameters object for further use
+"""
 import argparse
 import sys
 
