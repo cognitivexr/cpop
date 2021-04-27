@@ -92,19 +92,20 @@ def main():
                 print('state changed: %s' % update.to_state)
 
             if update.changed and sm.state == AnchoringState.STABLE:
-                # FIXME: in principle the pose values of the window should be so similar, that it doesn't matter which
-                #  value to use. so we use the latest one here. but it would be more robust to find the median from the
-                #  window for example.
                 extrinsic = sm.calculate_extrinsic_parameters()
                 print('           revc:', extrinsic.rvec)
                 print('           tevc:', extrinsic.tvec)
                 print('camera position:', extrinsic.camera_position())
+
                 print('save these values and terminate? (y/n): ', end='')
                 line = sys.stdin.readline()
-                if line.strip() in ['yes', 'y']:
+                if line.strip().lower() in ['yes', 'y']:
+                    # update extrinsic parameters and save camera
                     camera.extrinsic = extrinsic
                     cameradb.save_camera(camera)
                     break
+                else:
+                    sm.window.clear()
 
             if show:
                 frame = detector.draw_ar_cubes(frame, poses)

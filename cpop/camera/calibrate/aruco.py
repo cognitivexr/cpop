@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Tuple
 
 import cv2
 import numpy as np
@@ -80,8 +80,8 @@ class AnchoringStateChange(NamedTuple):
         return AnchoringStateChange(prev != cur, prev, cur)
 
 
-class Positions:
-    data: List
+class Measurements:
+    data: List[Tuple[Marker, np.ndarray]]
     size: int
 
     def __init__(self, size) -> None:
@@ -89,10 +89,10 @@ class Positions:
         self.data = []
         self.size = size
 
-    def append(self, element):
+    def append(self, marker: Marker):
         data = self.data
 
-        data.append(element)
+        data.append((marker, marker.get_camera_position()))
         if len(data) > self.size:
             self.data = data[1:]
 
@@ -107,18 +107,34 @@ class Positions:
     def is_full(self):
         return self.length == self.size
 
-    def array(self):
-        return np.asarray(self.data)
+    def positions(self):
+        return np.asarray([d[1] for d in self.data])
 
-    def relative_spread(self):
+    def markers(self) -> List[Marker]:
+        return [d[0] for d in self.data]
+
+    def get_median_marker(self):
+        """
+        Returns the marker from the window where the relative deviation from the median is minimal on each axis.
+        """
+        positions = self.positions()
+        markers = self.markers()
+
+        median = np.median(positions, axis=0)  # [med_x,med_y,med_z] the median value for each axis
+        mdev = np.abs((positions - median) / median)  # [[x,y,z]] relative deviation from the median for each vector
+        deviations = np.sum(mdev, axis=1)  # calculates a scalar deviation value for each vector in the window
+        i = np.argmin(deviations)  # get the index where the deviation is minimal
+        return markers[i]
+
+    def positions_relative_spread(self):
         """
         Calculates the relative spread (max - min) / median, which is a normalized measure of spread.
         """
-        window = self.array()
+        positions = self.positions()
 
-        pmin = np.min(window, axis=0)
-        pmax = np.max(window, axis=0)
-        median = np.median(window, axis=0)
+        pmin = np.min(positions, axis=0)
+        pmax = np.max(positions, axis=0)
+        median = np.median(positions, axis=0)
 
         return np.abs((pmax - pmin) / median)
 
@@ -129,9 +145,8 @@ class AnchoringStateMachine:
     def __init__(self, origin_id=0, stabilize_frames=30, stability_th=0.1):
         self.state = AnchoringState.UNKNOWN
         self.origin_id = origin_id
-        self.window = Positions(stabilize_frames)
+        self.window = Measurements(stabilize_frames)
         self.stability_th = stability_th
-        self.stable_origin = None
 
     def process(self, poses: ArucoPoseDetections) -> AnchoringStateChange:
         state = self.state
@@ -142,22 +157,15 @@ class AnchoringStateMachine:
 
         if len(origins) == 0:
             self.state = AnchoringState.SEARCHING
-            sc = AnchoringStateChange.create(state, self.state)
-            if sc.changed:
-                window.clear()
-            return sc
+            return AnchoringStateChange.create(state, self.state)
         elif len(origins) > 1:
             self.state = AnchoringState.FOUND_TOO_MANY
-            sc = AnchoringStateChange.create(state, self.state)
-            if sc.changed:
-                window.clear()
-            return sc
+            return AnchoringStateChange.create(state, self.state)
 
         origin = self.get_origin_marker(poses)
-        window.append(origin.get_camera_position())
+        window.append(origin)
 
         if self.is_stable(window):
-            self.stable_origin = origin
             self.state = AnchoringState.STABLE
         else:
             self.state = AnchoringState.STABILIZING
@@ -176,10 +184,10 @@ class AnchoringStateMachine:
             return False
 
         # we consider the last X measurements as stable if the relative spread is below a threshold
-        xyz = window.relative_spread()
+        xyz = window.positions_relative_spread()
         return np.max(xyz) < self.stability_th
 
     def calculate_extrinsic_parameters(self) -> ExtrinsicCameraParameters:
         # FIXME: calculate [R t] for project matrix?
-        marker = self.stable_origin
+        marker = self.window.get_median_marker()
         return ExtrinsicCameraParameters(marker.pose.rvec, marker.pose.tvec)
