@@ -97,7 +97,7 @@ def main():
                 print('           tevc:', extrinsic.tvec)
                 print('camera position:', extrinsic.camera_position())
 
-                print('save these values and terminate? (y/n): ', end='')
+                print('save these values and terminate? (y/n): ', end='', flush=True)
                 line = sys.stdin.readline()
                 if line.strip().lower() in ['yes', 'y']:
                     # update extrinsic parameters and save camera
