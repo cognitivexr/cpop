@@ -15,6 +15,12 @@ class Pose(NamedTuple):
     rvec: np.ndarray
     tvec: np.ndarray
 
+    def get_camera_position(self):
+        rmat, _ = cv2.Rodrigues(self.rvec)
+        rot_marker_cam = np.transpose(rmat)
+        pos_cam_marker = np.matmul(-rot_marker_cam, self.tvec)
+        return pos_cam_marker
+
 
 class Marker:
     marker_id: int
@@ -29,11 +35,7 @@ class Marker:
     def get_camera_position(self):
         if self.pose is None:
             raise MissingParametersError('marker pose was not yet detected')
-
-        rmat, _ = cv2.Rodrigues(self.pose.rvec)
-        rot_marker_cam = np.transpose(rmat)
-        pos_cam_marker = np.matmul(-rot_marker_cam, self.pose.tvec)
-        return pos_cam_marker
+        return self.pose.get_camera_position()
 
 
 class ArucoDetections:
@@ -260,4 +262,3 @@ class ArucoDetector:
             rvec=pose.rvec, tvec=pose.tvec,
             length=self.context.marker_length
         )
-        # return ArucoPoses(detections, rvecs, tvecs, obj_points)

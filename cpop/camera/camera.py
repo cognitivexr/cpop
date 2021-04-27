@@ -63,16 +63,30 @@ class ExtrinsicCameraParameters:
     rvec: np.ndarray
     tvec: np.ndarray
 
+    def __init__(self, rvec, tvec):
+        self.rvec = rvec
+        self.tvec = tvec
+
+    def camera_position(self):
+        rmat, _ = cv2.Rodrigues(self.rvec)
+        rot_marker_cam = np.transpose(rmat)
+        pos_cam_marker = np.matmul(-rot_marker_cam, self.tvec)
+        return pos_cam_marker
+
+    def __str__(self):
+        return 'ExtrinsicCameraParameters(rvec=%s, tvec=%s)' % (self.rvec, self.tvec)
+
 
 class Camera:
     model: str
     intrinsic: IntrinsicCameraParameters
-    extrinsic: ExtrinsicCameraParameters
+    extrinsic: Optional[ExtrinsicCameraParameters]
 
-    def __init__(self, intrinsic, model: str = None):
+    def __init__(self, intrinsic, model: str = None, extrinsic=None):
         self.intrinsic = intrinsic
         self.model = model
         self.device_index = 0
+        self.extrinsic = extrinsic
 
     def get_capture_device(self, device_index=None):
         if device_index is None:
