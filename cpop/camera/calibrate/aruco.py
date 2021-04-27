@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 from cpop.aruco.context import ArucoContext, DefaultArucoContext
-from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections, Marker, Pose
+from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections, Marker
 from cpop.camera import Camera
 from cpop.camera.camera import ExtrinsicCameraParameters
 
@@ -131,6 +131,7 @@ class AnchoringStateMachine:
         self.origin_id = origin_id
         self.window = Positions(stabilize_frames)
         self.stability_th = stability_th
+        self.stable_origin = None
 
     def process(self, poses: ArucoPoseDetections) -> AnchoringStateChange:
         state = self.state
@@ -156,6 +157,7 @@ class AnchoringStateMachine:
         window.append(origin.get_camera_position())
 
         if self.is_stable(window):
+            self.stable_origin = origin
             self.state = AnchoringState.STABLE
         else:
             self.state = AnchoringState.STABILIZING
@@ -177,7 +179,7 @@ class AnchoringStateMachine:
         xyz = window.relative_spread()
         return np.max(xyz) < self.stability_th
 
-
-def create_extrinsic_parameters(marker_pose: Pose) -> ExtrinsicCameraParameters:
-    # FIXME: calculate [R t] for project matrix?
-    return ExtrinsicCameraParameters(marker_pose.rvec, marker_pose.tvec)
+    def calculate_extrinsic_parameters(self) -> ExtrinsicCameraParameters:
+        # FIXME: calculate [R t] for project matrix?
+        marker = self.stable_origin
+        return ExtrinsicCameraParameters(marker.pose.rvec, marker.pose.tvec)

@@ -95,14 +95,15 @@ def main():
                 # FIXME: in principle the pose values of the window should be so similar, that it doesn't matter which
                 #  value to use. so we use the latest one here. but it would be more robust to find the median from the
                 #  window for example.
-                marker = sm.get_origin_marker(poses)
-                print('           revc:', marker.pose.rvec)
-                print('           tevc:', marker.pose.tvec)
-                print('camera position:', marker.get_camera_position())
+                extrinsic = sm.calculate_extrinsic_parameters()
+                print('           revc:', extrinsic.rvec)
+                print('           tevc:', extrinsic.tvec)
+                print('camera position:', extrinsic.camera_position())
                 print('save these values and terminate? (y/n): ', end='')
                 line = sys.stdin.readline()
                 if line.strip() in ['yes', 'y']:
-                    # TODO: save parameters
+                    camera.extrinsic = extrinsic
+                    cameradb.save_camera(camera)
                     break
 
             if show:

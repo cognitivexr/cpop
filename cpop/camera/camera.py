@@ -67,6 +67,15 @@ class ExtrinsicCameraParameters:
         self.rvec = rvec
         self.tvec = tvec
 
+    def camera_position(self):
+        rmat, _ = cv2.Rodrigues(self.rvec)
+        rot_marker_cam = np.transpose(rmat)
+        pos_cam_marker = np.matmul(-rot_marker_cam, self.tvec)
+        return pos_cam_marker
+
+    def __str__(self):
+        return 'ExtrinsicCameraParameters(rvec=%s, tvec=%s)' % (self.rvec, self.tvec)
+
 
 class Camera:
     model: str
