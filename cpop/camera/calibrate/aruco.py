@@ -1,8 +1,13 @@
+from enum import Enum
+from typing import NamedTuple, List
+
 import cv2
+import numpy as np
 
 from cpop.aruco.context import ArucoContext, DefaultArucoContext
-from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections
+from cpop.aruco.detect import ArucoDetector, ArucoPoseDetections, Marker, Pose
 from cpop.camera import Camera
+from cpop.camera.camera import ExtrinsicCameraParameters
 
 
 def run_aruco_detection(camera: Camera, aruco_context: ArucoContext = None):
@@ -55,3 +60,124 @@ def run_aruco_detection(camera: Camera, aruco_context: ArucoContext = None):
     finally:
         cap.release()
         cv2.destroyAllWindows()
+
+
+class AnchoringState(Enum):
+    UNKNOWN = 0
+    SEARCHING = 1
+    FOUND_TOO_MANY = 2
+    STABILIZING = 3
+    STABLE = 4
+
+
+class AnchoringStateChange(NamedTuple):
+    changed: bool
+    from_state: AnchoringState
+    to_state: AnchoringState
+
+    @staticmethod
+    def create(prev, cur) -> 'AnchoringStateChange':
+        return AnchoringStateChange(prev != cur, prev, cur)
+
+
+class Positions:
+    data: List
+    size: int
+
+    def __init__(self, size) -> None:
+        super().__init__()
+        self.data = []
+        self.size = size
+
+    def append(self, element):
+        data = self.data
+
+        data.append(element)
+        if len(data) > self.size:
+            self.data = data[1:]
+
+    def clear(self):
+        self.data.clear()
+
+    @property
+    def length(self):
+        return len(self.data)
+
+    @property
+    def is_full(self):
+        return self.length == self.size
+
+    def array(self):
+        return np.asarray(self.data)
+
+    def relative_spread(self):
+        """
+        Calculates the relative spread (max - min) / median, which is a normalized measure of spread.
+        """
+        window = self.array()
+
+        pmin = np.min(window, axis=0)
+        pmax = np.max(window, axis=0)
+        median = np.median(window, axis=0)
+
+        return np.abs((pmax - pmin) / median)
+
+
+class AnchoringStateMachine:
+    state: AnchoringState
+
+    def __init__(self, origin_id=0, stabilize_frames=30, stability_th=0.1):
+        self.state = AnchoringState.UNKNOWN
+        self.origin_id = origin_id
+        self.window = Positions(stabilize_frames)
+        self.stability_th = stability_th
+
+    def process(self, poses: ArucoPoseDetections) -> AnchoringStateChange:
+        state = self.state
+        origin_id = self.origin_id
+
+        origins = np.where(poses.detections.ids == origin_id)[0]
+        window = self.window
+
+        if len(origins) == 0:
+            self.state = AnchoringState.SEARCHING
+            sc = AnchoringStateChange.create(state, self.state)
+            if sc.changed:
+                window.clear()
+            return sc
+        elif len(origins) > 1:
+            self.state = AnchoringState.FOUND_TOO_MANY
+            sc = AnchoringStateChange.create(state, self.state)
+            if sc.changed:
+                window.clear()
+            return sc
+
+        origin = self.get_origin_marker(poses)
+        window.append(origin.get_camera_position())
+
+        if self.is_stable(window):
+            self.state = AnchoringState.STABLE
+        else:
+            self.state = AnchoringState.STABILIZING
+
+        return AnchoringStateChange.create(state, self.state)
+
+    def get_origin_marker(self, poses: ArucoPoseDetections) -> Marker:
+        for marker in poses.markers:
+            if marker.marker_id == self.origin_id:
+                return marker
+
+        raise ValueError('no marker with id %s found' % self.origin_id)
+
+    def is_stable(self, window) -> bool:
+        if not window.is_full:
+            return False
+
+        # we consider the last X measurements as stable if the relative spread is below a threshold
+        xyz = window.relative_spread()
+        return np.max(xyz) < self.stability_th
+
+
+def create_extrinsic_parameters(marker_pose: Pose) -> ExtrinsicCameraParameters:
+    # FIXME: calculate [R t] for project matrix?
+    return ExtrinsicCameraParameters(marker_pose.rvec, marker_pose.tvec)
