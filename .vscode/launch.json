@@ -5,7 +5,35 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Calibrate IP CAM",
+            "name": "Detector 640x360 Camera 0",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.detector",
+            "args": [
+                "--width",
+                "640",
+                "--height",
+                "360",
+                "--show"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Anchor 640x360 Camera 0",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.anchor",
+            "args": [
+                "--width",
+                "640",
+                "--height",
+                "360",
+                "--show"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Calibration 640x360 Camera 0",
             "type": "python",
             "request": "launch",
             "module": "cpop.cli.calibrate",
@@ -13,9 +41,20 @@
                 "--width",
                 "640",
                 "--height",
+                "360"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Validation 640x360 Camera 0",
+            "type": "python",
+            "request": "launch",
+            "module": "cpop.cli.validate",
+            "args": [
+                "--width",
+                "640",
+                "--height",
                 "360",
-                "--device-id",
-                "http://192.168.0.164:8080/video",
             ],
             "justMyCode": false
         },
@@ -53,6 +92,7 @@
             ],
             "justMyCode": false
         },
+        
         {
             "name": "Validation 1920x1080",
             "type": "python",
