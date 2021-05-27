@@ -1,3 +1,4 @@
+from cpop.camera.camera import Camera
 from typing import NamedTuple, List, Union
 
 import cv2

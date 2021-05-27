@@ -1,3 +1,4 @@
+from typing import List
 from cpop.camera.camera import Camera
 import logging
 import os
@@ -45,7 +46,7 @@ class ObjectDetectorDecoratorV2(ObjectDetector):
             stream.notify(detection)
 
 
-def create_object_detector(camera: Camera) -> ObjectDetector:
+def create_object_detector(camera: Camera, object_list: List[str]=['person']) -> ObjectDetector:
     """
     Returns an ObjetDetector backed by an ObjectDetectorV2. If config.CALIBRATE_FRAME is defined, then it uses that to
     calibrate the intrinsic camera parameters. Otherwise it captures a high-res frame from the camera and tries to
@@ -54,7 +55,7 @@ def create_object_detector(camera: Camera) -> ObjectDetector:
     :return: an ObjectDetector
     """
 
-    object_detector = ObjectDetectorV2(camera)
+    object_detector = ObjectDetectorV2(camera, object_list)
 
     logger.info('camera parameters (rvec: %s, tvec: %s)', object_detector.rvec, object_detector.tvec)
 
