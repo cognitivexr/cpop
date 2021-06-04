@@ -1,5 +1,5 @@
 import abc
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Any
 
 
 class Point(NamedTuple):
@@ -13,6 +13,7 @@ class Detection(NamedTuple):
     Type: str
     Position: Point
     Shape: List[Point]
+    metadata: Any = None
 
 
 class CalibrationError(Exception):
