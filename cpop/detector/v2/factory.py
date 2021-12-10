@@ -20,10 +20,10 @@ class ObjectDetectorDecoratorV2(ObjectDetector):
     def __init__(self, detector: ObjectDetectorV2):
         self.detector = detector
 
-    def process(self, frame, stream: DetectionStream, *args, **kwargs):
+    def process(self, frame, depth, stream: DetectionStream, *args, **kwargs):
         timestamp = time.time()
 
-        _, labels, positions, heights, widths = self.detector.estimate_object_pose(frame, viz=False)
+        _, labels, positions, heights, widths = self.detector.estimate_object_pose(frame, depth, viz=False)
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('object_detection took %.4f s', time.time() - timestamp)

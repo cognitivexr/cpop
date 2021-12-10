@@ -13,6 +13,7 @@ CAMERA_WIDTH = 1024
 CAMERA_HEIGHT = 576
 CAMERA_DEVICE = 0
 CAMERA_MODEL = 'default'
+FPS = 30
 
 # aruco markers
 ARUCO_MARKER_LENGTH = 0.18  # aruco marker side length

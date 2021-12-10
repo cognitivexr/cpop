@@ -31,7 +31,7 @@ def print_calibrate_instructions(args):
 
 def get_camera_from_arguments(args) -> Camera:
     try:
-        camera = cameradb.get_camera(args.camera_model, args.width, args.height)
+        camera = cameradb.get_camera(args.camera_model, args.width, args.height, args.realsense)
         camera.device_index = args.device_id
         return camera
     except ValueError as e:
@@ -74,6 +74,8 @@ def main():
                         help='the aruco marker id used as origin')
     parser.add_argument('--show', action='store_true',
                         help='display the camera feed in a window and draw the markers')
+    parser.add_argument('--realsense', action='store_true',
+                        help='use depth sensors of the camera, only works if an intel realsense is connected')
 
     args = parser.parse_args()
 

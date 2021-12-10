@@ -63,20 +63,6 @@ class ObjectDetectorV2:
     """
 
     def __init__(self, camera: Camera, object_list: List[str]=['person']):
-        r""" Initializes CameraCalibration module with sensor information
-
-        Either hfov and vfov must be given or the pixel_size
-        and the focal length must be passed to initialize the
-        camera_matrix in later steps.
-
-        Parameters
-        ----------
-        camera_matrix : np.array
-            encodes the focal length and the principal point
-        dist_coeff : np.array
-            encodes the distortion coefficients for radial and 
-            tangential distortion
-        """
         # Model
         # For PIL/cv2/np inputs and NMS
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -86,6 +72,7 @@ class ObjectDetectorV2:
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
         self.camera = camera
         self.camera_matrix = camera.intrinsic.camera_matrix
+        self.dist = camera.intrinsic.dist_coeffs
         tvec = camera.extrinsic.tvec
         rvec = camera.extrinsic.rvec
         self.set_camera_pose(tvec, rvec)
@@ -102,129 +89,103 @@ class ObjectDetectorV2:
     def set_camera_matrix(self, camera_matrx: np.array):
         self.camera_matrix=camera_matrx
 
-    ########################
-    # FIND OBJECT POSITION #
-    ########################
+    def convert_from_uvd(self, u, v, d):
+        # d *= self.pxToMetre
+        cx = self.camera_matrix[0, 2]
+        cy = self.camera_matrix[1, 2]
+        focalx = self.camera_matrix[0, 0]
+        focaly = self.camera_matrix[1, 1]
 
-    def get_intersection(self, ray_origin, ray_dir, plane, plane_d):
-        r""" Returns the 3D intersection point
-        """
-        plane_dot_ray = plane[0] * ray_dir[0] + \
-                        plane[1] * ray_dir[1] + plane[2] * ray_dir[2] + plane_d
-        if abs(plane_dot_ray) > 0:
-            plane_dot_ray_origin = ray_origin[0] * plane[0] + \
-                                   ray_origin[1] * plane[1] + ray_origin[2] * plane[2] + plane_d
-            return ray_origin - ray_dir * (plane_dot_ray_origin / plane_dot_ray)
+        x_over_z = (cx - u) / focalx
+        y_over_z = (cy - v) / focaly
 
-    def to_coordinate_plane(self, image_point):
-        r""" maps a image point to a coordinate
-        """
-        # calculate the 3d direction of the ray in camera coordinate frame
-        image_point_norm = cv2.undistortPoints(
-            image_point, self.camera_matrix, None)[0][0]
-        ray_dir_cam = np.array([image_point_norm[0], image_point_norm[1], 1])
+        z = d / np.sqrt(1. + x_over_z**2 + y_over_z**2)
 
-        # compute the 3d direction
-        # Map the ray direction vector from camera coordinates
-        # to chessboard coordinates
-        ray_dir_marker = np.matmul(self.rot_marker_cam, ray_dir_cam)
+        x = x_over_z * z * -1
+        y = y_over_z * z * -1
 
-        # Find the desired 3d point by computing the intersection between the
-        # 3d ray and the chessboard plane with Z=0:
-        # Expressed in the coordinate frame of the chessboard, the ray
-        # originates from the
-        # 3d position of the camera center, i.e. 'pos_cam_chessboard',
-        #  and its 3d
-        # direction vector is 'ray_dir_chessboard'
-        # Any point on this ray can be expressed parametrically using
-        # its depth 'd':
-        # P(d) = pos_cam_chessboard + d * ray_dir_chessboard
-        # To find the intersection between the ray and the plane of the
-        # chessboard, we compute the depth 'd' for which the Z coordinate
-        # of P(d) is equal to zero
-        d_intersection = -self.pos_cam_marker[2] / ray_dir_marker[2]
-        intersection_point = self.pos_cam_marker + d_intersection * ray_dir_marker
-        return intersection_point
+        return x, y, z
 
-    def estimate_object_pose(self, frame, viz=True):
+    def estimate_object_pose(self, frame, depth, viz=True):
         if viz:
             tl = 2
             tf = 1
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.model(frame_rgb, 320 + 32 * 4)  # includes NMS
 
-        person_coordinates = []
+        positions = []
+        heights = []
+        widths = []
         labels = []
+
         points = results.xyxy[0].cpu().numpy()
         for x in points:
             label = self.names[int(x[5])]
             if label in self.object_list:
-                a = np.array([x[0], x[1]])
-                b = np.array([x[2], x[1]])
-                c = np.array([x[2], x[3]])
-                d = np.array([x[0], x[3]])
+                depth_val = depth[int((x[1]+x[3])/2), int((x[0]+x[2])/2)]
+                if depth_val == 0:
+                    continue
                 labels.append(label)
-                person_coordinates.append([a, b, c, d])
-            if viz:
-                c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
-                color = self.colors[int(x[5])]
-                draw_point(frame, x[2:], color)
-                cv2.rectangle(frame, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
-                t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
-                c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
-                cv2.rectangle(frame, c1, c2, (0, 0, 0), -
-                1, cv2.LINE_AA)  # filled
-                cv2.putText(frame, label, (c1[0], c1[1] - 2), 0, tl / 3,
-                            [225, 255, 255], thickness=tf,
-                            lineType=cv2.LINE_AA)
-        person_coordinates = np.array(person_coordinates)
-        positions = []
-        heights = []
-        widths = []
-        for person_coordinate in person_coordinates:
-            point0 = self.to_coordinate_plane(person_coordinate[3])
-            point1 = self.to_coordinate_plane(person_coordinate[2])
-            pos = (point0 + point1) / 2
-            if viz:
-                points, _ = cv2.projectPoints(point0,
-                                              self.rvec, self.tvec,
-                                              self.camera_matrix, None)
-                draw_point(frame, points[0][0], (255, 255, 255))
-                points, jac = cv2.projectPoints(point1,
-                                                self.rvec, self.tvec,
-                                                self.camera_matrix, None)
-                draw_point(frame, points[0][0], (255, 255, 255))
 
-            bounding_span = point1 - point0
-            up_vector = np.array([0, 0, -1])
+                y1, y2 = int(x[1]), int(x[3])
+                x1, x2 = int(x[0]), int(x[2])
 
-            # calculate normal vector of plane
-            width = norm(bounding_span)
-            bounding_span = bounding_span / width
-            plane_normal = np.cross(bounding_span, up_vector)
+                p1 = np.array([self.convert_from_uvd(x1, y1, depth_val)])
+                p2 = np.array([self.convert_from_uvd(x2, y1, depth_val)])
+                p3 = np.array([self.convert_from_uvd(x2, y2, depth_val)])
+                p4 = np.array([self.convert_from_uvd(x1, y2, depth_val)])
+                p0 = np.array((p1+p2+p3+p4)/4)
+                width = np.linalg.norm(p1-p2)
+                height = np.linalg.norm(p1-p4)
 
-            # to unit vector
-            plane_normal = plane_normal / norm(plane_normal)
-            plane_d = -np.dot(plane_normal, point1)
+                positions.append(p0[0])
+                heights.append(height)
+                widths.append(width)
 
-            plane_point = (person_coordinate[0] + person_coordinate[1]) / 2
-            plane_norm_dir = cv2.undistortPoints(
-                plane_point, self.camera_matrix, None)[0][0]
-            ray_dir_cam = np.array([plane_norm_dir[0], plane_norm_dir[1], 1])
-            ray_dir_cam = ray_dir_cam / norm(ray_dir_cam)
-            ray_dir_chessboard = np.matmul(
-                self.rot_marker_cam, ray_dir_cam)
-            ray_origin = self.pos_cam_marker
-            point1 = self.get_intersection(ray_origin, ray_dir_chessboard, plane_normal, plane_d)
+                if viz:
+                    delta = (p0/np.linalg.norm(p0))*width
+                    front = np.array([p1, p2, p3, p4])
+                    back = np.array([p+delta for p in front])
+                    points = np.concatenate((front, back))
+                    frame = self.draw_bounding(frame, points)
 
-            height = point0[2] - point1[2]
-
-            if viz:
-                points, _ = cv2.projectPoints(point1, self.rvec, self.tvec, self.camera_matrix, None)
-                draw_point(frame, points[0][0], (0, 255, 255))
-                print(f'height={height}, width={width}, pos={pos}')
-
-            positions.append(pos)
-            heights.append(height)
-            widths.append(width)
         return frame, labels, positions, heights, widths
+    
+    def draw_bounding(self, bgr, axis):
+        # Now we transform the cube to the marker position and project the resulting points into 2d
+        color = (255, 0, 0)
+        rvec = np.array([0., 0., 0.]).reshape(-1, 1)
+        tvec = rvec
+        imgpts, jac = cv2.projectPoints(axis, rvec, tvec, self.camera_matrix, self.dist)
+        imgpts = np.int32(imgpts).reshape(-1, 2)
+        # Now comes the drawing.
+        # In this example, I would like to draw the cube so that the walls also get a painted
+        # First create a copy of the original picture on which to draw the cube sides (hack for alpha blending)
+        sides = bgr.copy()
+        # Draw the bottom side (over the marker)
+        sides = cv2.drawContours(sides, [imgpts[:4]], -1, color, -2)
+        # Draw the top side (opposite of the marker)
+        sides = cv2.drawContours(sides, [imgpts[4:]], -1, color, -2)
+        # Draw the right side vertical to the marker
+        sides = cv2.drawContours(
+            sides, [np.array([imgpts[0], imgpts[1], imgpts[5], imgpts[4]])], -1, color, -2)
+        # Draw the left side vertical to the marker
+        sides = cv2.drawContours(
+            sides, [np.array([imgpts[2], imgpts[3], imgpts[7], imgpts[6]])], -1, color, -2)
+        # Draw the front side vertical to the marker
+        sides = cv2.drawContours(
+            sides, [np.array([imgpts[1], imgpts[2], imgpts[6], imgpts[5]])], -1, color, -2)
+        # Draw the back side vertical to the marker
+        sides = cv2.drawContours(
+            sides, [np.array([imgpts[0], imgpts[3], imgpts[7], imgpts[4]])], -1, color, -2)
+        # Until here the walls of the cube are drawn in and can be merged
+        bgr = cv2.addWeighted(sides, 0.1, bgr, 0.9, 0)
+        # Now the edges of the cube are drawn thicker and stronger
+        bgr = cv2.drawContours(bgr, [imgpts[:4]], -1, color, 2)
+        for ii, j in zip(range(4), range(4, 8)):
+            bgr = cv2.line(bgr, tuple(imgpts[ii]), tuple(imgpts[j]), color, 2)
+        bgr = cv2.drawContours(bgr, [imgpts[4:]], -1, (255, 0, 0), 2)
+
+        return bgr
+
+

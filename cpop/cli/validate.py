@@ -24,6 +24,8 @@ def main():
                         help='length of the aruco marker in meters (required for camera position calculation)')
     parser.add_argument('--aruco-marker-set', type=str, required=False, default=config.ARUCO_MARKER_SET,
                         help='the aruco marker set (e.g., SET_4X4_50 or SET_6X6_1000')
+    parser.add_argument('--realsense', action='store_true',
+                        help='use depth sensors of the camera, only works if an intel realsense is connected')
 
     args = parser.parse_args()
 

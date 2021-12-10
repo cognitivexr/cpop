@@ -144,20 +144,16 @@ def collect_charuco_detections(capture, aruco_dict, charuco_board):
     return corners_all, ids_all, image_size
 
 
-def run_charuco_calibration(source=0, width=None, height=None, max_samples=50) -> IntrinsicCameraParameters:
+def run_charuco_calibration(camera: Camera, max_samples=50) -> IntrinsicCameraParameters:
     aruco_dict, charuco_board = create_default_board()
 
-    cap = cv2.VideoCapture(source)
-    if width is not None:
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    if height is not None:
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    cap = camera.get_capture_device(depth=False)
 
     more, frame = cap.read()
     if not more:
         cap.release()
         raise ValueError(
-            'could not get frames from capture device %s' % source)
+            'could not get frames from capture device %s' % camera.model)
 
     try:
         print('collecting detections...')

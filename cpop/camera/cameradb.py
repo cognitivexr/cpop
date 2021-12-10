@@ -149,7 +149,7 @@ def try_load_extrinsic_parameters(model: str) -> Optional[ExtrinsicCameraParamet
     return None
 
 
-def get_camera(model: str, width: int, height: int) -> Camera:
+def get_camera(model: str, width: int, height: int, realsense: bool) -> Camera:
     intrinsic = require_intrinsic_parameters(model, width, height)
     extrinsic = try_load_extrinsic_parameters(model)
-    return Camera(model=model, intrinsic=intrinsic, extrinsic=extrinsic)
+    return Camera(model=model, intrinsic=intrinsic, extrinsic=extrinsic, realsense=realsense)

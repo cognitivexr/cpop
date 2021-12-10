@@ -29,6 +29,8 @@ You can perform the calibration of the intrinsic camera parameters with the foll
 The calibration uses a 5x7 ChArUco board with 4x4 markers, a square length of 3.5 cm, and marker length of 2.6 cm. You
 can [download an A4 PDF here](https://cognitivexr.at/static/files/calib.io_charuco_297x210_5x7_35_DICT_4X4.pdf).
 
+If have an *Intel Realsense* Camera use the flag `--realsense` to enable the realsense camera. Have a look at [Setup](TODO) to see the setup for the camera.
+
 After calibrating the camera, you can run
 
     python -m cpop.cli.validate --charuco
