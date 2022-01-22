@@ -104,12 +104,11 @@ class ObjectDetectorV2:
         x = x_over_z * z * -1
         y = y_over_z * z * -1
 
-        return x, y, z
+        print(x)
 
-    def estimate_object_pose(self, frame, depth, viz=True):
-        if viz:
-            tl = 2
-            tf = 1
+        return np.array([x, y, z])
+
+    def estimate_object_pose(self, frame, depth):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.model(frame_rgb, 320 + 32 * 4)  # includes NMS
 
@@ -130,26 +129,24 @@ class ObjectDetectorV2:
                 y1, y2 = int(x[1]), int(x[3])
                 x1, x2 = int(x[0]), int(x[2])
 
-                p1 = np.array([self.convert_from_uvd(x1, y1, depth_val)])
-                p2 = np.array([self.convert_from_uvd(x2, y1, depth_val)])
-                p3 = np.array([self.convert_from_uvd(x2, y2, depth_val)])
-                p4 = np.array([self.convert_from_uvd(x1, y2, depth_val)])
-                p0 = np.array((p1+p2+p3+p4)/4)
-                width = np.linalg.norm(p1-p2)
-                height = np.linalg.norm(p1-p4)
+                left_top = self.convert_from_uvd(x1, y1, depth_val)
+                right_top = self.convert_from_uvd(x2, y1, depth_val)
+                right_bot = self.convert_from_uvd(x2, y2, depth_val)
+                left_bot = self.convert_from_uvd(x1, y2, depth_val)
+                
+                p0 = (left_bot+right_bot)/2
 
-                positions.append(p0[0])
+                width = np.linalg.norm(left_top-right_top)
+                height = np.linalg.norm(left_top-left_bot)
+
+                print(self.tvec)
+                print(p0)
+                print(p0-self.tvec)
+                positions.append(p0-self.tvec)
                 heights.append(height)
                 widths.append(width)
 
-                if viz:
-                    delta = (p0/np.linalg.norm(p0))*width
-                    front = np.array([p1, p2, p3, p4])
-                    back = np.array([p+delta for p in front])
-                    points = np.concatenate((front, back))
-                    frame = self.draw_bounding(frame, points)
-
-        return frame, labels, positions, heights, widths
+        return labels, positions, heights, widths
     
     def draw_bounding(self, bgr, axis):
         # Now we transform the cube to the marker position and project the resulting points into 2d

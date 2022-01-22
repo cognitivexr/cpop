@@ -29,7 +29,7 @@ You can perform the calibration of the intrinsic camera parameters with the foll
 The calibration uses a 5x7 ChArUco board with 4x4 markers, a square length of 3.5 cm, and marker length of 2.6 cm. You
 can [download an A4 PDF here](https://cognitivexr.at/static/files/calib.io_charuco_297x210_5x7_35_DICT_4X4.pdf).
 
-If have an *Intel Realsense* Camera use the flag `--realsense` to enable the realsense camera. Have a look at [Setup](TODO) to see the setup for the camera.
+If you have an *Intel Realsense* Camera use the flag `--realsense` to enable the realsense camera.
 
 After calibrating the camera, you can run
 
@@ -39,6 +39,7 @@ and verify that the axis is plotted correctly onto the board. You can also remov
 aruco markers, in which case you need to further specify the markers you want to detect. For example,
 with `aruco-marker-set SET_4x4_50 --aruco-marker-length 0.18` the script will detect 4x4 markers and calculate camera
 positions based on the marker length of 18 cm.
+Again use the flag `--realsense` to enable the realsense camera.
 
 #### Extrinsic camera parameters
 
@@ -63,14 +64,21 @@ parameters and terminate. The output would look something like this:
 For the values to be correct, it is essential that the `--aruco-marker-length` argument, or the `ARUCO_MARKER_LENGTH`
 config parameter is set correctly.
 The value describes the length of a marker side in meters.
+Add the flag `--realsense` to use a connected realsense camera.
 
 ### Run the service
+
+After intrinsic and extrinsic calibration the detector can be started to find the 3D position and bounding box of objects relative to the anchor point.
 
 Make sure a MQTT broker is up and running, check out the `cpop/config.py` for configuration values. Then run
 
     python -m cpop.cli.detector
 
 which will start sending object positions into the configured MQTT topics.
+
+The `--realsense` flag can be set to make use of Intel Realsense Cameras.
+If the `--realsense` and `--depth` flags are set, the object positions and bounding box are calculated using the depth of the Intel Realsense Camera.
+Otherwise it is assumed that objects stand on the same plane as the anchor AruCo pattern.
 
 ## Demo application
 
