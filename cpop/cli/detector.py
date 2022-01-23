@@ -125,17 +125,15 @@ def main():
     cap = camera.get_capture_device(depth=args.depth)
 
     if args.realsense and args.depth:
-        print('Using ObjectDetectorV2...')
-        detector = ObjectDetectorV2(camera, ['cup'])
+        detector = ObjectDetectorV2(camera, ['person'])
     elif args.depth:
         raise Exception('Realsense is not enabled!')
     else:
-        print('Using ObjectDetectorV1...')
-        detector = ObjectDetectorV1(camera, ['cup'])
+        detector = ObjectDetectorV1(camera, ['person'])
 
     try:
-        stream = DetectionPrinter()  # TODO: replace with real MQTT publisher once done
-        # stream = DetectionPublishStream(CPOPPublisherMQTT())
+        # stream = DetectionPrinter()
+        stream = DetectionPublishStream(CPOPPublisherMQTT())
         while True:
             if args.depth:
                 more, depth, frame = cap.read()

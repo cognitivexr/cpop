@@ -54,7 +54,6 @@ class CPOPPublisherMQTT(CPOPPublisher):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('publishing message to topic %s: %s',
                          self.topic, event)
-
         self.client.publish(self.topic, event)
 
     def close(self):
