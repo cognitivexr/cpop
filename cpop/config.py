@@ -2,17 +2,17 @@ import logging
 import os
 
 # host and port of local MQTT broker
-BROKER_HOST = os.environ.get('BROKER_HOST') or 'localhost'
-BROKER_PORT = int(os.environ.get('BROKER_PORT') or 1883)
+BROKER_HOST = os.environ.get('CPOP_BROKER_HOST') or 'localhost'
+BROKER_PORT = int(os.environ.get('CPOP_BROKER_PORT') or 1883)
 
 # MQTT topic name
 MQTT_TOPIC_NAME = 'cpop'
 
 # camera device
-CAMERA_WIDTH = 1280
-CAMERA_HEIGHT = 720
+CAMERA_WIDTH = int(os.environ.get('CPOP_CAMERA_WIDTH') or 1280)
+CAMERA_HEIGHT = int(os.environ.get('CPOP_CAMERA_HEIGHT') or 720)
 CAMERA_DEVICE = 0
-CAMERA_MODEL = 'default'
+CAMERA_MODEL = os.environ.get('CPOP_CAMERA_MODEL') or 'default'
 FPS = 30
 
 # aruco markers
