@@ -80,6 +80,12 @@ The `--realsense` flag can be set to make use of Intel Realsense Cameras.
 If the `--realsense` and `--depth` flags are set, the object positions and bounding box are calculated using the depth of the Intel Realsense Camera.
 Otherwise it is assumed that objects stand on the same plane as the anchor AruCo pattern.
 
+## Build Docker image
+
+### Build NVIDIA GPU-accelerated container
+
+    docker build -f Dockerfile.cuda11 -t cognitivexr/cpop:cuda-11 .
+
 ## Demo application
 
 For the DISCE'21 workshop at IEEE VR we developed a simple demo "AR X-Ray Vision" application using Unity.
