@@ -82,7 +82,16 @@ Otherwise it is assumed that objects stand on the same plane as the anchor AruCo
 
 ## Build Docker image
 
+### Build container
+
+This container is not GPU accelerated and will likely be pretty slow.
+But can be useful to run the calibration scripts.
+
+    docker build -f Dockerfile.cuda11 -t cognitivexr/cpop .
+
 ### Build NVIDIA GPU-accelerated container
+
+This requires the [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker)
 
     docker build -f Dockerfile.cuda11 -t cognitivexr/cpop:cuda-11 .
 
