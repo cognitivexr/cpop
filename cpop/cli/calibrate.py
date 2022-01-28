@@ -3,7 +3,7 @@ import argparse
 from cpop import config
 from cpop.camera import cameradb, Camera
 from cpop.camera.calibrate import run_charuco_calibration
-from cpop.camera.camera import IntrinsicCameraParameters
+from cpop.camera.camera import IntrinsicCameraParameters, RealSenseCamera
 
 
 def main():
@@ -28,10 +28,12 @@ def main():
     args = parser.parse_args()
 
     print('press q to stop collection and start calibration')
-    camera = Camera(model=args.camera_model,
-                    intrinsic=IntrinsicCameraParameters(args.width, args.height),
-                    realsense=args.realsense,
-                    fps=args.fps)
+    camera_factory = Camera if not args.realsense else RealSenseCamera
+    camera = camera_factory(
+        model=args.camera_model,
+        intrinsic=IntrinsicCameraParameters(args.width, args.height),
+        fps=args.fps
+    )
 
     parameters = run_charuco_calibration(
         camera,

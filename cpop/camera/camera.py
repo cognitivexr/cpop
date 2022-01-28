@@ -11,7 +11,8 @@ class IntrinsicCameraParameters(CameraParameters):
     width: int  # number of pixels
     height: int  # number of pixels
 
-    def __init__(self, width, height, camera_matrix: Optional[np.ndarray] = None, dist_coeffs: Optional[np.ndarray] = None):
+    def __init__(self, width, height, camera_matrix: Optional[np.ndarray] = None,
+                 dist_coeffs: Optional[np.ndarray] = None):
         super().__init__(camera_matrix, dist_coeffs)
         self.width = width
         self.height = height
@@ -83,27 +84,30 @@ class Camera:
     extrinsic: Optional[ExtrinsicCameraParameters]
     fps: int
 
-    def __init__(self, intrinsic: Optional[np.ndarray] = None, model: str = None, extrinsic=None, fps=30, realsense=False):
+    def __init__(self, intrinsic: Optional[IntrinsicCameraParameters] = None, model: str = None, extrinsic=None, fps=30):
         self.intrinsic = intrinsic
         self.model = model
         self.device_index = 0
         self.extrinsic = extrinsic
         self.fps = fps
-        self.realsense = realsense
 
     def get_capture_device(self, device_index=None, depth=False):
-        if self.realsense:
-            from cpop.camera.realsense import RealsenseCapture
-            return RealsenseCapture(self.intrinsic.width,
-                                    self.intrinsic.height,
-                                    self.fps,
-                                    depth=depth)
-        else:
-            if device_index is None:
-                device_index = self.device_index or 0
+        if device_index is None:
+            device_index = self.device_index or 0
 
-            cap = cv2.VideoCapture(device_index)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.intrinsic.width)
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.intrinsic.height)
+        cap = cv2.VideoCapture(device_index)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.intrinsic.width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.intrinsic.height)
 
-            return cap
+        return cap
+
+
+class RealSenseCamera(Camera):
+    def get_capture_device(self, device_index=None, depth=False):
+        from cpop.camera.realsense import RealsenseCapture
+        return RealsenseCapture(
+            self.intrinsic.width,
+            self.intrinsic.height,
+            self.fps,
+            depth=depth
+        )

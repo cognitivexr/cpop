@@ -1,6 +1,6 @@
 import logging
 import random
-from math import tan, pi
+import sys
 from typing import List
 
 import cv2
@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 def draw_line(frame, p1, p2, color, thickness=3):
-    r""" Draws a line on the image
+    """
+    Draws a line on the image
     """
     frame = cv2.line(frame,
                      tuple(p1[:2].astype(int)),
@@ -30,10 +31,10 @@ def draw_line(frame, p1, p2, color, thickness=3):
 
 
 def draw_point(blob_frame, p, color=(0, 255, 0)):
-    r""" Draws a point on the image
     """
-    cv2.circle(blob_frame, tuple(p[:2].astype(int)),
-               3, color, -1)
+    Draws a point on the image
+    """
+    cv2.circle(blob_frame, tuple(p[:2].astype(int)), 3, color, -1)
 
 
 def draw(frame, imgpts):
@@ -61,22 +62,27 @@ class ObjectDetectorV1:
     a custom camera calibration method, and the assumption that objects are on the ground plane for depth estimation.
     """
 
-    def __init__(self, camera: Camera, object_list: List[str]=['person']):
+    def __init__(self, camera: Camera, object_list: List[str] = None):
         self.camera = camera
         self.camera_matrix = camera.intrinsic.camera_matrix
         self.dist = camera.intrinsic.dist_coeffs
         tvec = camera.extrinsic.tvec
         rvec = camera.extrinsic.rvec
         self.set_camera_pose(tvec, rvec)
-        self.object_list = object_list
+        self.object_list = object_list or ['person']
         # Model
         # For PIL/cv2/np inputs and NMS
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).autoshape()
+        self.model = self._load_model()
         self.model.to(self.device)
         self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
 
+    def _load_model(self):
+        model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+        if sys.version_info < (3, 8):
+            model.autoshape()  # TODO: check which torch version this was removed from
+        return model
 
     def set_camera_pose(self, tvec, rvec):
         self.rvec = rvec

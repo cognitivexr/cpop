@@ -8,7 +8,7 @@ from typing import Union, Optional
 
 import numpy as np
 
-from cpop.camera.camera import IntrinsicCameraParameters, Camera, ExtrinsicCameraParameters
+from cpop.camera.camera import IntrinsicCameraParameters, ExtrinsicCameraParameters, Camera, RealSenseCamera
 
 logger = logging.getLogger(__name__)
 
@@ -152,4 +152,6 @@ def try_load_extrinsic_parameters(model: str) -> Optional[ExtrinsicCameraParamet
 def get_camera(model: str, width: int, height: int, realsense: bool) -> Camera:
     intrinsic = require_intrinsic_parameters(model, width, height)
     extrinsic = try_load_extrinsic_parameters(model)
-    return Camera(model=model, intrinsic=intrinsic, extrinsic=extrinsic, realsense=realsense)
+    if realsense:
+        return RealSenseCamera(model=model, intrinsic=intrinsic, extrinsic=extrinsic)
+    return Camera(model=model, intrinsic=intrinsic, extrinsic=extrinsic)

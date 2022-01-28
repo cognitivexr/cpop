@@ -1,14 +1,10 @@
-from cpop.camera.camera import Camera
 import logging
 import random
-from math import tan, pi
+import sys
 
-import cv2
-import numpy as np
 import torch
 from numpy.linalg import norm
 
-from cpop.aruco.context import *
 from cpop.aruco.detect import *
 
 logger = logging.getLogger(__name__)
@@ -62,11 +58,11 @@ class ObjectDetectorV2:
     a custom camera calibration method, and the assumption that objects are on the ground plane for depth estimation.
     """
 
-    def __init__(self, camera: Camera, object_list: List[str]=['person']):
+    def __init__(self, camera: Camera, object_list: List[str] = None):
         # Model
         # For PIL/cv2/np inputs and NMS
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).autoshape()
+        self.model = self._load_model()
         self.model.to(self.device)
         self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in self.names]
@@ -76,18 +72,24 @@ class ObjectDetectorV2:
         tvec = camera.extrinsic.tvec
         rvec = camera.extrinsic.rvec
         self.set_camera_pose(tvec, rvec)
-        self.object_list = object_list
+        self.object_list = object_list or ['person']
+
+    def _load_model(self):
+        model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+        if sys.version_info < (3, 8):
+            model.autoshape()
+        return model
 
     def set_camera_pose(self, tvec: np.array, rvec: np.array):
-        self.tvec=tvec
-        self.rvec=rvec
+        self.tvec = tvec
+        self.rvec = rvec
         self.rot_cam_marker = cv2.Rodrigues(self.rvec)[0]
         self.rot_marker_cam = np.transpose(self.rot_cam_marker)
         self.t_cam_marker = self.tvec
         self.pos_cam_marker = np.matmul(-self.rot_marker_cam, self.t_cam_marker)
 
     def set_camera_matrix(self, camera_matrx: np.array):
-        self.camera_matrix=camera_matrx
+        self.camera_matrix = camera_matrx
 
     def convert_from_uvd(self, u, v, d):
         # d *= self.pxToMetre
@@ -99,12 +101,10 @@ class ObjectDetectorV2:
         x_over_z = (cx - u) / focalx
         y_over_z = (cy - v) / focaly
 
-        z = d / np.sqrt(1. + x_over_z**2 + y_over_z**2)
+        z = d / np.sqrt(1. + x_over_z ** 2 + y_over_z ** 2)
 
         x = x_over_z * z * -1
         y = y_over_z * z * -1
-
-        print(x)
 
         return np.array([x, y, z])
 
@@ -121,7 +121,7 @@ class ObjectDetectorV2:
         for x in points:
             label = self.names[int(x[5])]
             if label in self.object_list:
-                depth_val = depth[int((x[1]+x[3])/2), int((x[0]+x[2])/2)]
+                depth_val = depth[int((x[1] + x[3]) / 2), int((x[0] + x[2]) / 2)]
                 if depth_val == 0:
                     continue
                 labels.append(label)
@@ -133,21 +133,18 @@ class ObjectDetectorV2:
                 right_top = self.convert_from_uvd(x2, y1, depth_val)
                 right_bot = self.convert_from_uvd(x2, y2, depth_val)
                 left_bot = self.convert_from_uvd(x1, y2, depth_val)
-                
-                p0 = (left_bot+right_bot)/2
 
-                width = np.linalg.norm(left_top-right_top)
-                height = np.linalg.norm(left_top-left_bot)
+                p0 = (left_bot + right_bot) / 2
 
-                print(self.tvec)
-                print(p0)
-                print(p0-self.tvec)
-                positions.append(p0-self.tvec)
+                width = np.linalg.norm(left_top - right_top)
+                height = np.linalg.norm(left_top - left_bot)
+
+                positions.append(p0 - self.tvec)
                 heights.append(height)
                 widths.append(width)
 
         return labels, positions, heights, widths
-    
+
     def draw_bounding(self, bgr, axis):
         # Now we transform the cube to the marker position and project the resulting points into 2d
         color = (255, 0, 0)
@@ -184,5 +181,3 @@ class ObjectDetectorV2:
         bgr = cv2.drawContours(bgr, [imgpts[4:]], -1, (255, 0, 0), 2)
 
         return bgr
-
-
