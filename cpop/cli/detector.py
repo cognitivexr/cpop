@@ -152,8 +152,8 @@ def main():
         detector = ObjectDetectorV1(camera, ['person', 'cup'])
 
     try:
-        stream = DetectionPrinter()
-        # stream = DetectionPublishStream(CPOPPublisherMQTT())
+        # stream = DetectionPrinter()
+        stream = DetectionPublishStream(CPOPPublisherMQTT())
         while True:
             if args.depth:
                 more, depth, frame = cap.read()
