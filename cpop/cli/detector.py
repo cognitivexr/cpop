@@ -33,6 +33,12 @@ class DetectionPrinter(DetectionStream):
     def notify(self, detection: Detection):
         print(detection)
 
+def draw_point(blob_frame, p, color=(0, 255, 0)):
+    """
+    Draws a point on the image
+    """
+    cv2.circle(blob_frame, tuple(p[:2].astype(int)), 3, color, -1)
+
 
 def draw_bounding(bgr, detection: Detection, camera: Camera):
     camera_matrix = camera.intrinsic.camera_matrix
@@ -45,15 +51,29 @@ def draw_bounding(bgr, detection: Detection, camera: Camera):
         detection.Position.Z
     ])
 
-    delta = (p0/np.linalg.norm(p0))*detection.width
+
+    #
+    rvec, tvec = camera.extrinsic.rvec, camera.extrinsic.tvec
+    points, _ = cv2.projectPoints(p0, rvec, tvec, camera_matrix, dist)
+    draw_point(bgr, points[0][0], (0, 255, 255))
+    #
+    # p0 += camera.extrinsic.tvec  # bottom mid
+    width = detection.Shape[0].X
+    height = detection.Shape[0].Z
+    #
+    p1 = p0+np.array([-width/2, 0, height])  # left top
+    p2 = p0+np.array([width/2, 0, height])  # right top
+    p3 = p0+np.array([width/2, 0, 0])  # right bottom
+    p4 = p0+np.array([-width/2, 0, 0])  # left bottom
+
     front = np.array([p1, p2, p3, p4])
-    back = np.array([p+delta for p in front])
+    back = np.array([p+np.array([0, width, 0]) for p in front])
     axis = np.concatenate((front, back))
 
     # Now we transform the cube to the marker position and project the resulting points into 2d
     color = (255, 0, 0)
-    rvec = np.array([0., 0., 0.]).reshape(-1, 1)
-    tvec = rvec
+    # rvec = np.array([0., 0., 0.]).reshape(-1, 1)
+    # tvec = rvec
     imgpts, jac = cv2.projectPoints(axis, rvec, tvec, camera_matrix, dist)
     imgpts = np.int32(imgpts).reshape(-1, 2)
     # Now comes the drawing.
@@ -125,15 +145,15 @@ def main():
     cap = camera.get_capture_device(depth=args.depth)
 
     if args.realsense and args.depth:
-        detector = ObjectDetectorV2(camera, ['person'])
+        detector = ObjectDetectorV2(camera, ['person', 'cup'])
     elif args.depth:
         raise Exception('Realsense is not enabled!')
     else:
-        detector = ObjectDetectorV1(camera, ['person'])
+        detector = ObjectDetectorV1(camera, ['person', 'cup'])
 
     try:
-        # stream = DetectionPrinter()
-        stream = DetectionPublishStream(CPOPPublisherMQTT())
+        stream = DetectionPrinter()
+        # stream = DetectionPublishStream(CPOPPublisherMQTT())
         while True:
             if args.depth:
                 more, depth, frame = cap.read()
@@ -145,9 +165,11 @@ def main():
 
             timestamp = time.time()
             if args.depth:
-                labels, positions, heights, widths = detector.estimate_object_pose(frame, depth)
+                labels, positions, heights, widths = detector.estimate_object_pose(
+                    frame, depth)
             else:
-                labels, positions, heights, widths = detector.estimate_object_pose(frame)
+                labels, positions, heights, widths = detector.estimate_object_pose(
+                    frame)
 
             for i in range(len(labels)):
                 position = positions[i]
@@ -158,12 +180,17 @@ def main():
                 detection = Detection(
                     Timestamp=timestamp,
                     Type=label,
-                    Position=Point(X=float(position[0]), Y=float(
-                        position[1]), Z=float(position[2])),
+                    Position=Point(
+                        X=float(position[0]),
+                        Y=float(position[1]),
+                        Z=float(position[2])),
                     Shape=[Point(X=width, Y=0.0, Z=height)]
                 )
 
                 logger.debug('adding detection to stream %s', detection)
+
+                if args.show:
+                    frame = draw_bounding(frame, detection, camera)
 
                 stream.notify(detection)
 

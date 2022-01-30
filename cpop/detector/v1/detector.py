@@ -120,19 +120,19 @@ class ObjectDetectorV1:
         ray_dir_marker = np.matmul(self.rot_marker_cam, ray_dir_cam)
 
         # Find the desired 3d point by computing the intersection between the
-        # 3d ray and the chessboard plane with Z=0:
+        # 3d ray and the chessboard plane with Y=0:
         # Expressed in the coordinate frame of the chessboard, the ray
         # originates from the
-        # 3d position of the camera center, i.e. 'pos_cam_chessboard',
-        #  and its 3d
-        # direction vector is 'ray_dir_chessboard'
+        # 3d position of the camera center, i.e. 'pos_cam_marker',
+        # and its 3d
+        # direction vector is 'ray_dir_camera'
         # Any point on this ray can be expressed parametrically using
         # its depth 'd':
-        # P(d) = pos_cam_chessboard + d * ray_dir_chessboard
+        # P(d) = pos_cam_marker + d * ray_dir_marker
         # To find the intersection between the ray and the plane of the
-        # chessboard, we compute the depth 'd' for which the Z coordinate
+        # marker, we compute the depth 'd' for which the Z coordinate
         # of P(d) is equal to zero
-        d_intersection = -self.pos_cam_marker[2] / ray_dir_marker[2]
+        d_intersection = -self.pos_cam_marker[1] / ray_dir_marker[1]
         intersection_point = self.pos_cam_marker + d_intersection * ray_dir_marker
         return intersection_point
 
@@ -140,30 +140,36 @@ class ObjectDetectorV1:
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.model(frame_rgb, 320 + 32 * 4)  # includes NMS
 
-        object_coordinates = []
         labels = []
-        points = results.xyxy[0].cpu().numpy()
-        for x in points:
-            label = self.names[int(x[5])]
-            if label in self.object_list:
-                a = np.array([x[0], x[1]])
-                b = np.array([x[2], x[1]])
-                c = np.array([x[2], x[3]])
-                d = np.array([x[0], x[3]])
-                labels.append(label)
-                object_coordinates.append([a, b, c, d])
-
-        object_coordinates = np.array(object_coordinates)
-
         positions = []
         heights = []
         widths = []
-        for coordinate in object_coordinates:
-            point0 = self.to_coordinate_plane(coordinate[3])
-            point1 = self.to_coordinate_plane(coordinate[2])
-            pos = (point0 + point1) / 2
+        points = results.xyxy[0].cpu().numpy()
+        for x in points:
+            label = self.names[int(x[5])]
+            if not (label in self.object_list):
+                continue
+            labels.append(label)
 
-            bounding_span = point1 - point0
+            # object_coordinates.append([a, b, c, d])
+
+            # left bottom
+            image_p4 = np.array([x[0], x[3]])# self.to_coordinate_plane(coordinate[3])
+            p4 = self.to_coordinate_plane(image_p4)
+            # right bottom
+            image_p3 = np.array([x[2], x[3]])# self.to_coordinate_plane(coordinate[2])
+            p3 = self.to_coordinate_plane(image_p3)
+            # top left
+            image_p1 = np.array([x[0], x[1]])
+            # top right
+            image_p2 = np.array([x[2], x[1]])
+
+            pos = (p4 + p3) / 2
+
+            # points, _ = cv2.projectPoints(pos, self.rvec, self.tvec, self.camera_matrix, self.dist)
+            # draw_point(frame, points[0][0], (0, 255, 255))
+
+            bounding_span = p4 - p3
             up_vector = np.array([0, 0, -1])
 
             # calculate normal vector of plane
@@ -173,21 +179,23 @@ class ObjectDetectorV1:
 
             # to unit vector
             plane_normal = plane_normal / norm(plane_normal)
-            plane_d = -np.dot(plane_normal, point1)
+            plane_d = -np.dot(plane_normal, p3)
 
-            plane_point = (coordinate[0] + coordinate[1]) / 2
+            plane_point = (image_p1 + image_p2) / 2
             plane_norm_dir = cv2.undistortPoints(
                 plane_point, self.camera_matrix, self.dist)[0][0]
 
             ray_dir_cam = np.array([plane_norm_dir[0], plane_norm_dir[1], 1])
+
             ray_dir_cam = ray_dir_cam / norm(ray_dir_cam)
             ray_dir_marker = np.matmul(
                 self.rot_marker_cam, ray_dir_cam)
             ray_origin = self.pos_cam_marker
 
-            point1 = self.get_intersection(ray_origin, ray_dir_marker, plane_normal, plane_d)
+            top_pos = self.get_intersection(ray_origin, ray_dir_marker, plane_normal, plane_d)
 
-            height = np.linalg.norm(point0 - point1)
+            print(f'pos: {pos} top_pos: {top_pos}')
+            height = np.linalg.norm(top_pos-pos)
 
             positions.append(pos)
             heights.append(height)

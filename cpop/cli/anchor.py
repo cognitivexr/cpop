@@ -105,8 +105,8 @@ def main():
 
             if update.changed and sm.state == AnchoringState.STABLE:
                 extrinsic = sm.calculate_extrinsic_parameters()
-                print('           revc:', extrinsic.rvec)
-                print('           tevc:', extrinsic.tvec)
+                print('           rvec:', extrinsic.rvec)
+                print('           tvec:', extrinsic.tvec)
                 print('camera position:', extrinsic.camera_position())
 
                 print('save these values and terminate? (y/n): ', end='', flush=True)
