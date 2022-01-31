@@ -56,8 +56,8 @@ parameters and terminate. The output would look something like this:
     state changed: AnchoringState.SEARCHING
     state changed: AnchoringState.STABILIZING
     state changed: AnchoringState.STABLE
-               revc: [ 2.00492366 -1.29424414  0.61388495]
-               tevc: [-0.30172898 -0.08695201  2.60050308]
+               rvec: [ 2.00492366 -1.29424414  0.61388495]
+               tvec: [-0.30172898 -0.08695201  2.60050308]
     camera position: [-1.72633218 -1.02258803  1.68383734]
     save these values and terminate? (y/n): y
 
@@ -77,7 +77,7 @@ Make sure a MQTT broker is up and running, check out the `cpop/config.py` for co
 which will start sending object positions into the configured MQTT topics.
 
 The `--realsense` flag can be set to make use of Intel Realsense Cameras.
-If the `--realsense` and `--depth` flags are set, the object positions and bounding box are calculated using the depth of the Intel Realsense Camera.
+If the `--realsense` and `--depth` flags are set, the object positions and bounding box are calculated with an experimental algorithm using the depth of the Intel Realsense Camera.
 Otherwise it is assumed that objects stand on the same plane as the anchor AruCo pattern.
 
 ## Build Docker image

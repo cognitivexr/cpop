@@ -121,7 +121,8 @@ class ObjectDetectorV2:
         for x in points:
             label = self.names[int(x[5])]
             if label in self.object_list:
-                depth_val = depth[int((x[1] + x[3]) / 2), int((x[0] + x[2]) / 2)]
+                depth_val = depth[int((x[1] + x[3]) / 2), int((x[0] + x[2]) / 2)]+0.5
+                draw_point(frame, np.array((int((x[0] + x[2]) / 2), int((x[1] + x[3]) / 2))), (0, 255, 255))
                 if depth_val == 0:
                     continue
                 labels.append(label)
@@ -135,11 +136,13 @@ class ObjectDetectorV2:
                 left_bot = self.convert_from_uvd(x1, y2, depth_val)
 
                 p0 = (left_bot + right_bot) / 2
+                print(self.tvec)
+                print(p0)
 
                 width = np.linalg.norm(left_top - right_top)
                 height = np.linalg.norm(left_top - left_bot)
 
-                positions.append(p0 - self.tvec)
+                positions.append(p0-self.tvec)
                 heights.append(height)
                 widths.append(width)
 
