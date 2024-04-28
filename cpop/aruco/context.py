@@ -27,8 +27,8 @@ class ArucoMarkerSet(Enum):
     SET_APRILTAG_36h10 = 19
     SET_APRILTAG_36h11 = 20
 
-    def get_aruco_dictionary(self) -> 'cv2.aruco_Dictionary':
-        return aruco.Dictionary_get(self.value)
+    def get_aruco_dictionary(self) -> aruco.Dictionary:
+        return aruco.getPredefinedDictionary(self.value)
 
 
 class CameraParameters:
@@ -61,9 +61,8 @@ class CharucoContext(ArucoContext):
         self.square_length = square_length
 
     def create_board(self):
-        return aruco.CharucoBoard_create(
-            squaresX=self.columns,
-            squaresY=self.rows,
+        return aruco.CharucoBoard(
+            size=(self.columns, self.rows),
             squareLength=self.square_length,
             markerLength=self.marker_length,
             dictionary=self.marker_set.get_aruco_dictionary()

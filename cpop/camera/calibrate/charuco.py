@@ -6,11 +6,10 @@ from cpop.camera import IntrinsicCameraParameters, Camera
 
 
 def create_default_board():
-    aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
+    aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 
-    board = aruco.CharucoBoard_create(
-        squaresX=7,
-        squaresY=5,
+    board = aruco.CharucoBoard(
+        size=(7, 5),
         squareLength=0.035,  # 3.5 cm
         markerLength=0.026,  # 2.6 cm
         dictionary=aruco_dict
@@ -216,7 +215,7 @@ def run_charuco_detection(camera: Camera, device_index: any = None):
                     tvec=None
                 )
                 try:
-                    frame = aruco.drawAxis(
+                    frame = cv2.drawFrameAxes(
                         frame, camera_matrix, dist_coeff, p_rvec, p_tvec, 0.1)
                 except cv2.error as e:
                     pass
